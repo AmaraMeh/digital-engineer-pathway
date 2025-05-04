@@ -1,0 +1,71 @@
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti-side {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(20px);
+  }
+  100% {
+    transform: translateX(-20px);
+  }
+}
+
+.bg-confetti {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  pointer-events: none;
+  overflow: hidden;
+  background-image: 
+    radial-gradient(circle, #ff0080 2px, transparent 4px),
+    radial-gradient(circle, #5f5fff 2px, transparent 4px),
+    radial-gradient(circle, #ffbf00 2px, transparent 4px),
+    radial-gradient(circle, #00ff8f 2px, transparent 4px),
+    radial-gradient(circle, #00c9ff 2px, transparent 4px);
+  background-size: 300px 300px;
+  background-position: 0 0, 100px 100px, 200px 50px, 50px 200px, 150px 150px;
+}
+
+.bg-confetti::before {
+  content: '';
+  position: absolute;
+  animation: confetti-fall 5s linear infinite;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 16px;
+  background-color: #ffd700;
+  opacity: 0;
+  animation: confetti-fall 3s ease-in-out infinite, confetti-side 2s ease-in-out infinite;
+}
+
+@for $i from 1 through 100 {
+  .confetti-piece:nth-child(#{$i}) {
+    left: random(100) * 1%;
+    top: -20px;
+    animation-delay: random(5) * 0.1s;
+    animation-duration: (random(5) + 3) * 1s;
+    background-color: hsla(random(360), 70%, 50%, 1);
+    transform-origin: random(100) - 50% random(100) - 50%;
+    width: random(8) + 5px;
+    height: random(10) + 5px;
+    border-radius: #{if(random(2) > 1, '50%', '0')};
+  }
+}

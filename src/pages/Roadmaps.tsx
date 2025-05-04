@@ -1,17 +1,243 @@
 
-import { FrontendRoadmap } from "@/components/roadmap/FrontendRoadmap";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Laptop, Server, Terminal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { InteractiveMindMap } from "@/components/roadmap/InteractiveMindMap";
+import { FrontendRoadmap } from "@/components/roadmap/FrontendRoadmap";
+
+// Frontend roadmap data structure
+const frontendData = [
+  {
+    id: "internet",
+    label: "Internet",
+    type: "main",
+    description: "Understanding how the internet works is fundamental to web development",
+    children: [
+      { 
+        id: "internet-works", 
+        label: "How does the internet work?", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "internet-basics",
+        description: "Learn about the backbone of the web",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "http", 
+        label: "What is HTTP?", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "http-fundamentals",
+        description: "The protocol that powers the web",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "domain", 
+        label: "What is Domain Name?", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "domains",
+        description: "Understanding web addressing",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "dns", 
+        label: "DNS and how it works?", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "dns-explained",
+        description: "The internet's phone book",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "browsers", 
+        label: "Browsers and how they work?", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "browser-internals",
+        description: "Understanding browser rendering engines",
+        completed: false,
+        progress: 0
+      },
+    ]
+  },
+  {
+    id: "html",
+    label: "HTML",
+    type: "main",
+    description: "The building blocks of any website",
+    children: [
+      { 
+        id: "html-basics", 
+        label: "Learn the basics", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "html-basics",
+        description: "HTML fundamentals for beginners",
+        completed: true,
+        progress: 100
+      },
+      { 
+        id: "semantic-html", 
+        label: "Writing Semantic HTML", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "semantic-html",
+        description: "Creating meaningful markup",
+        completed: false, 
+        progress: 45
+      },
+      { 
+        id: "forms-validation", 
+        label: "Forms and Validations", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "html-forms",
+        description: "Building interactive forms",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "accessibility", 
+        label: "Accessibility", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "web-accessibility",
+        description: "Making the web usable for everyone",
+        completed: false,
+        progress: 0
+      }
+    ]
+  },
+  {
+    id: "css",
+    label: "CSS",
+    type: "main",
+    description: "Style and layout for your web pages",
+    children: [
+      { 
+        id: "css-basics", 
+        label: "Learn the basics", 
+        type: "topic", 
+        status: "recommended",
+        courseId: "css-fundamentals",
+        description: "CSS fundamentals for styling web pages",
+        completed: false,
+        progress: 20
+      },
+      { 
+        id: "layouts", 
+        label: "Making Layouts", 
+        type: "topic", 
+        status: "recommended", 
+        courseId: "css-layouts",
+        description: "Creating complex page layouts",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "responsive", 
+        label: "Responsive Design", 
+        type: "topic", 
+        status: "recommended", 
+        courseId: "responsive-web",
+        description: "Adapting to different screen sizes",
+        completed: false,
+        progress: 0
+      },
+    ]
+  },
+  {
+    id: "javascript",
+    label: "JavaScript",
+    type: "main",
+    description: "Add interactivity to your websites",
+    children: [
+      { 
+        id: "js-basics", 
+        label: "Learn the Basics", 
+        type: "topic", 
+        status: "recommended", 
+        courseId: "js-fundamentals",
+        description: "JavaScript syntax and core concepts",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "dom", 
+        label: "Learn DOM Manipulation", 
+        type: "topic", 
+        status: "recommended", 
+        courseId: "dom-manipulation",
+        description: "Interacting with page elements",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "fetch", 
+        label: "Fetch API / Ajax", 
+        type: "topic", 
+        status: "recommended", 
+        courseId: "fetch-api",
+        description: "Making asynchronous requests",
+        completed: false,
+        progress: 0
+      },
+    ]
+  },
+  {
+    id: "framework",
+    label: "Frontend Framework",
+    type: "main",
+    description: "Tools to build complex user interfaces",
+    children: [
+      { 
+        id: "react", 
+        label: "React", 
+        type: "topic", 
+        status: "recommended", 
+        courseId: "react-fundamentals",
+        description: "Component-based UI library",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "vue", 
+        label: "Vue.js", 
+        type: "topic", 
+        status: "alternative", 
+        courseId: "vue-fundamentals",
+        description: "Progressive JavaScript framework",
+        completed: false,
+        progress: 0
+      },
+      { 
+        id: "angular", 
+        label: "Angular", 
+        type: "topic", 
+        status: "alternative", 
+        courseId: "angular-fundamentals",
+        description: "Platform for building web applications",
+        completed: false,
+        progress: 0
+      }
+    ]
+  }
+];
 
 const Roadmaps = () => {
   const [selectedTab, setSelectedTab] = useState("frontend");
+  const [viewMode, setViewMode] = useState<"mindmap" | "list">("mindmap");
   const [loaded, setLoaded] = useState(false);
   const { toast } = useToast();
   
@@ -39,12 +265,22 @@ const Roadmaps = () => {
       
       <div className="container mx-auto px-4 py-20">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
+          <motion.h1 
+            className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             Learning Roadmaps
-          </h1>
-          <p className="text-xl text-muted-foreground">
+          </motion.h1>
+          <motion.p 
+            className="text-xl text-muted-foreground"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             Follow structured learning paths to master programming and computer science fundamentals
-          </p>
+          </motion.p>
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
@@ -65,64 +301,91 @@ const Roadmaps = () => {
             </TabsList>
           </div>
           
-          <div className="mb-8 text-center">
-            <Badge className="mb-2 px-3 py-1 bg-primary/10 text-primary">
-              {selectedTab === "frontend" ? "Frontend Development" : 
-               selectedTab === "backend" ? "Backend Development" : "DevOps Engineering"}
-            </Badge>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {roadmapDescriptions[selectedTab as keyof typeof roadmapDescriptions]}
-            </p>
+          <div className="mb-6 flex justify-between items-center">
+            <div className="text-center mx-auto">
+              <Badge className="mb-2 px-3 py-1 bg-primary/10 text-primary">
+                {selectedTab === "frontend" ? "Frontend Development" : 
+                 selectedTab === "backend" ? "Backend Development" : "DevOps Engineering"}
+              </Badge>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                {roadmapDescriptions[selectedTab as keyof typeof roadmapDescriptions]}
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <Badge 
+                className={`cursor-pointer px-3 py-1 ${viewMode === "mindmap" 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-secondary hover:bg-primary/20"}`}
+                onClick={() => setViewMode("mindmap")}
+              >
+                Mind Map
+              </Badge>
+              <Badge 
+                className={`cursor-pointer px-3 py-1 ${viewMode === "list" 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-secondary hover:bg-primary/20"}`}
+                onClick={() => setViewMode("list")}
+              >
+                List View
+              </Badge>
+            </div>
           </div>
           
-          <AnimatePresence mode="wait">
-            <TabsContent value="frontend" className="mt-0">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
+          <TabsContent value="frontend" className="mt-0">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              {viewMode === "mindmap" ? (
+                <InteractiveMindMap 
+                  data={frontendData} 
+                  title="Frontend Development Roadmap" 
+                  description="A visual guide to becoming a frontend developer"
+                />
+              ) : (
                 <FrontendRoadmap />
-              </motion.div>
-            </TabsContent>
-            
-            <TabsContent value="backend" className="mt-0">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card className="w-full p-6 hover:shadow-lg transition-all border-dashed">
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-3xl">Backend Development Roadmap</CardTitle>
-                    <CardDescription className="text-lg">
-                      Backend roadmap content is coming soon. Check back later!
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </motion.div>
-            </TabsContent>
-            
-            <TabsContent value="devops" className="mt-0">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card className="w-full p-6 hover:shadow-lg transition-all border-dashed">
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-3xl">DevOps Roadmap</CardTitle>
-                    <CardDescription className="text-lg">
-                      DevOps roadmap content is coming soon. Check back later!
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </motion.div>
-            </TabsContent>
-          </AnimatePresence>
+              )}
+            </motion.div>
+          </TabsContent>
+          
+          <TabsContent value="backend" className="mt-0">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="w-full p-6 hover:shadow-lg transition-all border-dashed">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-3xl">Backend Development Roadmap</CardTitle>
+                  <CardDescription className="text-lg">
+                    Backend roadmap content is coming soon. Check back later!
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </motion.div>
+          </TabsContent>
+          
+          <TabsContent value="devops" className="mt-0">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="w-full p-6 hover:shadow-lg transition-all border-dashed">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-3xl">DevOps Roadmap</CardTitle>
+                  <CardDescription className="text-lg">
+                    DevOps roadmap content is coming soon. Check back later!
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </motion.div>
+          </TabsContent>
         </Tabs>
       </div>
       
