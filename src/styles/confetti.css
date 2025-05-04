@@ -88,3 +88,10 @@
 .confetti-18 { left: 95%; animation-delay: 1.8s; background-color: #00bfff; width: 8px; height: 12px; }
 .confetti-19 { left: 5%; animation-delay: 1.9s; background-color: #ff6347; width: 12px; height: 8px; border-radius: 50%; }
 .confetti-20 { left: 15%; animation-delay: 2.0s; background-color: #7cfc00; width: 9px; height: 11px; }
+
+/* Additional confetti pieces with fixed CSS syntax */
+.confetti-21 { left: 25%; animation-delay: 2.1s; background-color: #e91e63; width: 10px; height: 12px; border-radius: 2px; }
+.confetti-22 { left: 35%; animation-delay: 2.2s; background-color: #2196f3; width: 8px; height: 8px; border-radius: 0; }
+.confetti-23 { left: 45%; animation-delay: 2.3s; background-color: #4caf50; width: 12px; height: 6px; border-radius: 50%; }
+.confetti-24 { left: 55%; animation-delay: 2.4s; background-color: #ff9800; width: 7px; height: 14px; border-radius: 0; }
+.confetti-25 { left: 65%; animation-delay: 2.5s; background-color: #9c27b0; width: 9px; height: 9px; border-radius: 50%; }

@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 type NodeType = "main" | "sub" | "topic";
@@ -10,18 +11,15 @@ interface Node {
   label: string;
   type: NodeType;
   description: string;
-  children?: Node[];
-}
-
-interface CourseNode extends Node {
   status?: string;
   courseId?: string;
   completed?: boolean;
   progress?: number;
+  children?: Node[];
 }
 
 // Update your data initialization to match the Node type
-const htmlData: CourseNode[] = [
+const htmlData: Node[] = [
   {
     id: "html-basics",
     label: "HTML Basics",
@@ -62,7 +60,7 @@ const htmlData: CourseNode[] = [
   },
 ];
 
-const cssData: CourseNode[] = [
+const cssData: Node[] = [
   {
     id: "css-basics",
     label: "CSS Basics",
@@ -103,7 +101,7 @@ const cssData: CourseNode[] = [
   },
 ];
 
-const jsData: CourseNode[] = [
+const jsData: Node[] = [
   {
     id: "js-basics",
     label: "JavaScript Basics",
@@ -145,7 +143,7 @@ const jsData: CourseNode[] = [
 ];
 
 // Make sure all nodes in the allData array are properly typed
-const allData: CourseNode[] = [...htmlData, ...cssData, ...jsData];
+const allData: Node[] = [...htmlData, ...cssData, ...jsData];
 
 const Roadmaps = () => {
   return (
