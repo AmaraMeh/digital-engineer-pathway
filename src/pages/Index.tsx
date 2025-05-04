@@ -1,73 +1,57 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Code, BookOpen, Award, Check, ExternalLink } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-
 const Index = () => {
   // Testimonials data
-  const testimonials = [
-    {
-      content: "CodePathway helped me transition from a complete beginner to landing my first developer job in just 8 months.",
-      author: "Sarah J.",
-      title: "Frontend Developer"
-    },
-    {
-      content: "The roadmaps are incredibly detailed and well structured. I finally understand what I need to learn and in what order.",
-      author: "Michael T.",
-      title: "Computer Science Student"
-    },
-    {
-      content: "I've tried many platforms, but the interactive pathway approach here has made all the difference in my learning experience.",
-      author: "Alex K.",
-      title: "Self-taught Developer"
-    }
-  ];
+  const testimonials = [{
+    content: "CodePathway helped me transition from a complete beginner to landing my first developer job in just 8 months.",
+    author: "Sarah J.",
+    title: "Frontend Developer"
+  }, {
+    content: "The roadmaps are incredibly detailed and well structured. I finally understand what I need to learn and in what order.",
+    author: "Michael T.",
+    title: "Computer Science Student"
+  }, {
+    content: "I've tried many platforms, but the interactive pathway approach here has made all the difference in my learning experience.",
+    author: "Alex K.",
+    title: "Self-taught Developer"
+  }];
 
   // Features data
-  const features = [
-    {
-      icon: Code,
-      title: "Interactive Roadmaps",
-      description: "Follow clear, structured learning paths based on industry standards and best practices."
-    },
-    {
-      icon: BookOpen,
-      title: "Comprehensive Courses",
-      description: "Learn everything from programming fundamentals to advanced topics with hands-on exercises."
-    },
-    {
-      icon: Award,
-      title: "Skill Certification",
-      description: "Earn certificates and badges as you progress through your learning journey."
-    }
-  ];
+  const features = [{
+    icon: Code,
+    title: "Interactive Roadmaps",
+    description: "Follow clear, structured learning paths based on industry standards and best practices."
+  }, {
+    icon: BookOpen,
+    title: "Comprehensive Courses",
+    description: "Learn everything from programming fundamentals to advanced topics with hands-on exercises."
+  }, {
+    icon: Award,
+    title: "Skill Certification",
+    description: "Earn certificates and badges as you progress through your learning journey."
+  }];
 
   // Learning paths
-  const learningPaths = [
-    {
-      title: "Frontend Development",
-      description: "Learn HTML, CSS, JavaScript, and modern frontend frameworks",
-      image: "/lovable-uploads/a9fe5199-f90e-4683-b8b4-3a01607d5d27.png",
-      link: "/roadmaps/frontend"
-    },
-    {
-      title: "Backend Development",
-      description: "Master server-side programming, databases, and APIs",
-      image: "/lovable-uploads/53e6d39d-7730-43ea-9516-c6fe0062b1cd.png",
-      link: "/roadmaps/backend"
-    },
-    {
-      title: "Cybersecurity",
-      description: "Understand security principles and protect digital systems",
-      image: "/lovable-uploads/2fca33da-52d6-4ac6-92ff-0f6e4fffed07.png",
-      link: "/roadmaps/cybersecurity"
-    }
-  ];
-
-  return (
-    <div className="min-h-screen flex flex-col">
+  const learningPaths = [{
+    title: "Frontend Development",
+    description: "Learn HTML, CSS, JavaScript, and modern frontend frameworks",
+    image: "/lovable-uploads/a9fe5199-f90e-4683-b8b4-3a01607d5d27.png",
+    link: "/roadmaps/frontend"
+  }, {
+    title: "Backend Development",
+    description: "Master server-side programming, databases, and APIs",
+    image: "/lovable-uploads/53e6d39d-7730-43ea-9516-c6fe0062b1cd.png",
+    link: "/roadmaps/backend"
+  }, {
+    title: "Cybersecurity",
+    description: "Understand security principles and protect digital systems",
+    image: "/lovable-uploads/2fca33da-52d6-4ac6-92ff-0f6e4fffed07.png",
+    link: "/roadmaps/cybersecurity"
+  }];
+  return <div className="min-h-screen flex flex-col">
       <Navbar />
       
       {/* Hero Section */}
@@ -93,12 +77,8 @@ const Index = () => {
           </div>
           
           <div className="mt-16 relative">
-            <div className="bg-gradient-to-b from-background/0 via-purple-500/5 to-background/0 absolute inset-0 rounded-xl"></div>
-            <img 
-              src="/lovable-uploads/4b6cfdc5-bc05-4c0d-b97b-1ef6669b1b6d.png" 
-              alt="Frontend Development Roadmap" 
-              className="rounded-xl shadow-lg border border-border/50 w-full max-w-4xl mx-auto"
-            />
+            
+            
           </div>
         </div>
       </section>
@@ -115,18 +95,13 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="bg-card border rounded-xl p-6 hover:shadow-lg transition-all hover:-translate-y-1"
-              >
+            {features.map((feature, index) => <div key={index} className="bg-card border rounded-xl p-6 hover:shadow-lg transition-all hover:-translate-y-1">
                 <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mb-4">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </section>
@@ -142,17 +117,9 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {learningPaths.map((path, index) => (
-              <div 
-                key={index} 
-                className="bg-card border rounded-xl overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1"
-              >
+            {learningPaths.map((path, index) => <div key={index} className="bg-card border rounded-xl overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1">
                 <div className="h-48 overflow-hidden">
-                  <img 
-                    src={path.image} 
-                    alt={path.title} 
-                    className="w-full h-full object-cover object-center"
-                  />
+                  
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold mb-2">{path.title}</h3>
@@ -164,8 +131,7 @@ const Index = () => {
                     </Link>
                   </Button>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </section>
@@ -225,19 +191,14 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div 
-                key={index} 
-                className="bg-card border rounded-xl p-6 hover:shadow-lg transition-all"
-              >
+            {testimonials.map((testimonial, index) => <div key={index} className="bg-card border rounded-xl p-6 hover:shadow-lg transition-all">
                 <div className="text-4xl text-primary mb-4">"</div>
                 <p className="text-lg mb-6">{testimonial.content}</p>
                 <div>
                   <p className="font-bold">{testimonial.author}</p>
                   <p className="text-sm text-muted-foreground">{testimonial.title}</p>
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </section>
@@ -266,8 +227,6 @@ const Index = () => {
       </section>
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
