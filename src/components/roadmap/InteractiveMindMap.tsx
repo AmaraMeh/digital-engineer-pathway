@@ -1,12 +1,11 @@
-
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Check, ArrowRight, BookOpen, Play, Code } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Search, X, Maximize2, Minimize2, RotateCcw, ChevronRight, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Node {
   id: string;
@@ -29,51 +28,79 @@ interface InteractiveMindMapProps {
 export const InteractiveMindMap = ({ data, title, description }: InteractiveMindMapProps) => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(["html", "css"]));
-  const [nodesPosition, setNodesPosition] = useState<Record<string, { x: number, y: number }>>({});
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [centerPosition, setCenterPosition] = useState({ x: 0, y: 0 });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredNodes, setFilteredNodes] = useState<Node[]>(data);
   const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Smooth spring animations
+  const springScale = useSpring(scale, { stiffness: 300, damping: 30 });
+  const springRotation = useSpring(rotation, { stiffness: 200, damping: 20 });
 
   useEffect(() => {
-    // Generate initial positions
-    if (mapContainerRef.current) {
-      const containerWidth = mapContainerRef.current.clientWidth;
-      const containerHeight = mapContainerRef.current.clientHeight;
-      
-      setCenterPosition({
-        x: containerWidth / 2,
-        y: containerHeight / 2
-      });
-      
-      const positions: Record<string, { x: number, y: number }> = {};
-      
-      // Place main nodes in a circle around the center
-      data.forEach((node, index) => {
-        const angle = (index / data.length) * 2 * Math.PI;
-        const radius = Math.min(containerWidth, containerHeight) * 0.35;
-        
-        positions[node.id] = {
-          x: centerPosition.x + radius * Math.cos(angle),
-          y: centerPosition.y + radius * Math.sin(angle)
-        };
-        
-        // For child nodes, place them in smaller circles around their parents
-        if (node.children) {
-          node.children.forEach((child, childIndex) => {
-            const childAngle = ((childIndex / node.children!.length) * 2 * Math.PI) + angle;
-            const childRadius = 150; // Smaller radius for children
-            
-            positions[child.id] = {
-              x: positions[node.id].x + childRadius * Math.cos(childAngle),
-              y: positions[node.id].y + childRadius * Math.sin(childAngle)
-            };
-          });
-        }
-      });
-      
-      setNodesPosition(positions);
+    if (searchQuery.trim() === "") {
+      setFilteredNodes(data);
+      return;
     }
-  }, [data, mapContainerRef.current?.clientWidth, mapContainerRef.current?.clientHeight]);
+
+    const searchLower = searchQuery.toLowerCase();
+    const filterNodes = (nodes: Node[]): Node[] => {
+      return nodes.filter(node => {
+        const matches = node.label.toLowerCase().includes(searchLower) ||
+                       node.description?.toLowerCase().includes(searchLower);
+        
+        if (node.children) {
+          const filteredChildren = filterNodes(node.children);
+          if (filteredChildren.length > 0) {
+            return true;
+          }
+        }
+        
+        return matches;
+      }).map(node => ({
+        ...node,
+        children: node.children ? filterNodes(node.children) : undefined
+      }));
+    };
+
+    setFilteredNodes(filterNodes(data));
+  }, [searchQuery, data]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    
+    setOffset(prev => ({
+      x: prev.x + dx,
+      y: prev.y + dy
+    }));
+    
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+      
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+      setScale(prev => Math.min(Math.max(prev - e.deltaY * 0.001, 0.5), 2));
+    } else {
+      setRotation(prev => prev + e.deltaX * 0.1);
+    }
+  };
 
   const toggleExpand = (nodeId: string) => {
     const newExpandedNodes = new Set(expandedNodes);
@@ -83,18 +110,6 @@ export const InteractiveMindMap = ({ data, title, description }: InteractiveMind
       newExpandedNodes.add(nodeId);
     }
     setExpandedNodes(newExpandedNodes);
-  };
-
-  const handleZoomIn = () => {
-    setScale(prev => Math.min(prev + 0.2, 2));
-  };
-
-  const handleZoomOut = () => {
-    setScale(prev => Math.max(prev - 0.2, 0.6));
-  };
-
-  const resetView = () => {
-    setScale(1);
   };
 
   const getStatusClass = (status: string | undefined) => {
@@ -117,10 +132,19 @@ export const InteractiveMindMap = ({ data, title, description }: InteractiveMind
     return "bg-gray-200 dark:bg-gray-700";
   };
 
-  const renderNode = (node: Node) => {
+  const calculateNodePosition = (node: Node, index: number, total: number, level: number = 0) => {
+    const angle = (index / total) * 2 * Math.PI;
+    const radius = 200 + (level * 150);
+    return {
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius
+    };
+  };
+
+  const renderNode = (node: Node, index: number, total: number, level: number = 0) => {
     const isExpanded = expandedNodes.has(node.id);
     const isSelected = selectedNode === node.id;
-    const position = nodesPosition[node.id] || { x: 0, y: 0 };
+    const position = calculateNodePosition(node, index, total, level);
     
     return (
       <motion.div 
@@ -130,35 +154,57 @@ export const InteractiveMindMap = ({ data, title, description }: InteractiveMind
         animate={{ 
           opacity: 1, 
           scale: 1,
-          x: position.x,
-          y: position.y,
+          x: position.x + offset.x,
+          y: position.y + offset.y,
           transition: { type: "spring", stiffness: 300, damping: 30 }
         }}
-        style={{ left: -100, top: -80 }} // Offset to center the node
+        style={{ left: -100, top: -80 }}
       >
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
         <motion.div
-          className={`cursor-pointer w-[200px] rounded-xl bg-white dark:bg-gray-900 border-2 ${
+                className={cn(
+                  "cursor-pointer w-[220px] rounded-xl bg-gradient-to-br from-gray-900/90 to-gray-800/90 dark:from-gray-900/90 dark:to-gray-800/90 backdrop-blur-sm border-2",
+                  "shadow-lg hover:shadow-xl transition-all duration-300",
             isSelected 
-              ? "border-primary shadow-lg shadow-primary/20" 
-              : "border-gray-200 dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50"
-          } overflow-hidden transition-all`}
-          whileHover={{ scale: 1.05 }}
+                    ? "border-primary shadow-primary/20" 
+                    : "border-gray-700 dark:border-gray-600 hover:border-primary/50 dark:hover:border-primary/50"
+                )}
+                whileHover={{ scale: 1.05, rotate: 1 }}
+                whileTap={{ scale: 0.95 }}
           onClick={() => setSelectedNode(node.id === selectedNode ? null : node.id)}
         >
           <div className="p-4">
-            <h3 className="font-bold text-lg mb-1">{node.label}</h3>
-            {node.description && <p className="text-xs text-gray-500 dark:text-gray-400">{node.description.substring(0, 60)}...</p>}
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
+                      {node.label}
+                    </h3>
+                    {node.status && (
+                      <Badge className={getStatusClass(node.status)}>
+                        {node.status}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {node.description && (
+                    <p className="text-xs text-gray-300 dark:text-gray-400 mb-3">
+                      {node.description.substring(0, 60)}...
+                    </p>
+                  )}
             
             {node.progress !== undefined && (
               <div className="mt-2">
                 <div className="flex justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">{node.progress}%</span>
+                        <span className="text-xs text-gray-300 dark:text-gray-400">{node.progress}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div 
+                      <div className="w-full h-1.5 bg-gray-700 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <motion.div 
                     className={`h-full rounded-full ${getProgressColor(node.progress)}`}
-                    style={{ width: `${node.progress || 0}%` }}
-                  ></div>
+                          initial={{ width: 0 }}
+                          animate={{ width: `${node.progress || 0}%` }}
+                          transition={{ duration: 0.5, ease: "easeOut" }}
+                        />
                 </div>
               </div>
             )}
@@ -168,195 +214,161 @@ export const InteractiveMindMap = ({ data, title, description }: InteractiveMind
                 <Button 
                   variant="ghost" 
                   size="sm"
+                        className="gap-1 text-gray-300 hover:text-primary"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleExpand(node.id);
                   }}
                 >
-                  {isExpanded ? "Collapse" : "Expand"}
+                        {isExpanded ? (
+                          <>
+                            <ChevronDown className="h-4 w-4" />
+                            Collapse
+                          </>
+                        ) : (
+                          <>
+                            <ChevronRight className="h-4 w-4" />
+                            Expand
+                          </>
+                        )}
                 </Button>
               </div>
             )}
           </div>
         </motion.div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">{node.description}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
-        {/* Render connections between nodes */}
-        {node.children && isExpanded && node.children.map(child => {
-          const childPosition = nodesPosition[child.id];
-          if (!childPosition) return null;
-          
-          const startX = position.x;
-          const startY = position.y;
-          const endX = childPosition.x;
-          const endY = childPosition.y;
+        {node.children && isExpanded && node.children.map((child, childIndex) => {
+          const childPosition = calculateNodePosition(child, childIndex, node.children!.length, level + 1);
+          const startX = position.x + offset.x;
+          const startY = position.y + offset.y;
+          const endX = childPosition.x + offset.x;
+          const endY = childPosition.y + offset.y;
           
           return (
             <motion.div 
-              key={`${node.id}-${child.id}`} 
-              className="absolute top-0 left-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              key={child.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                x: childPosition.x + offset.x,
+                y: childPosition.y + offset.y,
+                transition: { type: "spring", stiffness: 300, damping: 30 }
+              }}
+              style={{ left: -100, top: -80 }}
             >
               <svg 
+                className="absolute"
                 style={{
-                  position: 'absolute', 
+                  left: 0,
                   top: 0, 
-                  left: 0, 
-                  width: Math.abs(endX - startX) + 400, 
-                  height: Math.abs(endY - startY) + 400,
-                  overflow: 'visible'
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none"
                 }}
               >
                 <motion.path
-                  d={`M${startX},${startY} Q${(startX+endX)/2},${(startY+endY)/2 - 50} ${endX},${endY}`}
-                  stroke="var(--primary)" 
+                  d={`M ${startX + 100} ${startY + 80} C ${(startX + endX) / 2} ${startY + 80}, ${(startX + endX) / 2} ${endY + 80}, ${endX + 100} ${endY + 80}`}
+                  stroke="rgba(99, 102, 241, 0.5)"
                   strokeWidth="2"
-                  fill="transparent"
-                  strokeDasharray="5,5"
+                  fill="none"
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </svg>
+              {renderNode(child, childIndex, node.children!.length, level + 1)}
             </motion.div>
           );
         })}
-        
-        {/* Render child nodes */}
-        {isExpanded && node.children && node.children.map(child => renderNode(child))}
       </motion.div>
     );
   };
 
   return (
-    <div className="w-full flex flex-col">
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
+    <div className="relative w-full h-[600px] overflow-hidden bg-grid-pattern">
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-4">
+        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
           {title}
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mt-2">
-          {description}
-        </p>
+          <p className="text-sm text-gray-300 mt-1">{description}</p>
       </div>
       
-      <div className="flex justify-center gap-4 mb-6">
-        <Button variant="outline" size="sm" onClick={handleZoomOut}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-out"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="8" x2="14" y1="11" y2="11"/></svg>
-        </Button>
-        <Button variant="outline" size="sm" onClick={resetView}>Reset</Button>
-        <Button variant="outline" size="sm" onClick={handleZoomIn}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/></svg>
-        </Button>
-      </div>
-      
-      <Card className="relative overflow-hidden border-2 rounded-xl border-primary/20 shadow-xl shadow-primary/5 w-full" style={{ height: "70vh" }}>
-        <div className="z-10 absolute top-2 left-2 right-2 flex justify-between items-center p-2 rounded-lg bg-white/80 dark:bg-black/80 backdrop-blur-md border border-gray-200/50 dark:border-gray-800/50">
           <div className="flex gap-2">
-            <Badge variant="outline" className="bg-green-500/10 border-green-500/40 text-green-700 dark:text-green-400">Recommended</Badge>
-            <Badge variant="outline" className="bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400">Alternative</Badge>
-            <Badge variant="outline" className="bg-gray-500/10 border-gray-500/40 text-gray-600 dark:text-gray-400">Optional</Badge>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search topics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-gray-900/90 border-gray-700 text-gray-300"
+            />
+            {searchQuery && (
+              <X
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 cursor-pointer"
+                onClick={() => setSearchQuery("")}
+              />
+            )}
           </div>
           
-          <div className="text-sm text-muted-foreground">
-            Click on a topic to view details
-          </div>
-        </div>
-        
-        <div
-          ref={mapContainerRef}
-          className="relative h-full w-full overflow-hidden p-4"
-        >
-          <motion.div
-            className="absolute top-0 left-0 w-full h-full"
-            animate={{ scale }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            style={{ transformOrigin: 'center center' }}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setScale(prev => Math.min(prev + 0.1, 2))}
+            className="bg-gray-900/90 border-gray-700 text-gray-300"
           >
-            {data.map(node => renderNode(node))}
-          </motion.div>
-        </div>
-      </Card>
-      
-      <AnimatePresence>
-        {selectedNode && (() => {
-          let selectedNodeData: Node | null = null;
+            <Maximize2 className="h-4 w-4" />
+          </Button>
           
-          // Find the selected node in the data
-          for (const node of data) {
-            if (node.id === selectedNode) {
-              selectedNodeData = node;
-              break;
-            }
-            
-            if (node.children) {
-              for (const child of node.children) {
-                if (child.id === selectedNode) {
-                  selectedNodeData = child;
-                  break;
-                }
-              }
-            }
-          }
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setScale(prev => Math.max(prev - 0.1, 0.5))}
+            className="bg-gray-900/90 border-gray-700 text-gray-300"
+          >
+            <Minimize2 className="h-4 w-4" />
+          </Button>
           
-          if (!selectedNodeData) return null;
-          
-          return (
-            <motion.div
-              key="details"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="mt-6"
-            >
-              <Card className="border-2 border-primary/20 shadow-lg">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <Badge className={getStatusClass(selectedNodeData.status)}>
-                        {selectedNodeData.status === "recommended" ? "Recommended" : 
-                         selectedNodeData.status === "alternative" ? "Alternative" : "Optional"}
-                      </Badge>
-                      <h2 className="text-2xl font-bold mt-2">{selectedNodeData.label}</h2>
-                    </div>
-                    {selectedNodeData.completed && (
-                      <Badge variant="outline" className="border-green-500 text-green-500 flex gap-1">
-                        <Check className="h-3 w-3" /> Completed
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <p className="text-muted-foreground mb-6">{selectedNodeData.description}</p>
-                  
-                  <div className="mb-6">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm text-muted-foreground">Progress</span>
-                      <span className="text-sm font-medium">{selectedNodeData.progress || 0}%</span>
-                    </div>
-                    <Progress 
-                      value={selectedNodeData.progress || 0} 
-                      className="h-2" 
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between gap-4">
-                    <Button variant="outline" asChild className="gap-1">
-                      <Link to={`/courses/${selectedNodeData.courseId}`}>
-                        <BookOpen className="h-4 w-4" /> Course Details
-                      </Link>
-                    </Button>
-                    <Button asChild className="gap-1 group bg-gradient-to-r from-primary to-purple-600">
-                      <Link to={`/courses/${selectedNodeData.courseId}/learn`}>
-                        <Play className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                        {selectedNodeData.progress && selectedNodeData.progress > 0 ? "Continue Learning" : "Start Learning"}
-                      </Link>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              setRotation(0);
+              setScale(1);
+              setOffset({ x: 0, y: 0 });
+            }}
+            className="bg-gray-900/90 border-gray-700 text-gray-300"
+          >
+            <RotateCcw className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              </Card>
+      
+      <motion.div
+        ref={containerRef}
+        className="w-full h-full"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onWheel={handleWheel}
+        style={{
+          scale: springScale,
+          rotate: springRotation,
+          cursor: isDragging ? "grabbing" : "grab"
+        }}
+      >
+        <div className="absolute inset-0 flex items-center justify-center">
+          {filteredNodes.map((node, index) => renderNode(node, index, filteredNodes.length))}
+        </div>
             </motion.div>
-          );
-        })()}
-      </AnimatePresence>
     </div>
   );
 };

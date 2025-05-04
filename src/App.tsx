@@ -1,11 +1,11 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -17,6 +17,18 @@ import CourseContent from "./pages/CourseContent";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { HtmlBasicsCourse } from "./components/courses/HtmlBasicsCourse";
+import AboutUs from "./pages/AboutUs";
+import ContactUs from "./pages/ContactUs";
+import Careers from "./pages/Careers";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import Blog from "./pages/Blog";
+import Tutorials from "./pages/Tutorials";
+import Community from "./pages/Community";
+import FAQ from "./pages/FAQ";
+import Leaderboard from "./pages/Leaderboard";
+import BattleRoyale from "./pages/BattleRoyale";
+import Inbox from "@/pages/Inbox";
 
 // Initialize React Query client
 const queryClient = new QueryClient({
@@ -32,25 +44,41 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/roadmaps" element={<Roadmaps />} />
-              <Route path="/courses" element={<Courses />} />
-              <Route path="/courses/:courseId" element={<CourseContent />} />
-              <Route path="/courses/html-basics/learn" element={<HtmlBasicsCourse />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Router>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<Profile />} />
+                <Route path="/roadmaps" element={<Roadmaps />} />
+                <Route path="/courses" element={<Courses />} />
+                <Route path="/courses/:courseId" element={<CourseContent />} />
+                <Route path="/courses/html-basics/learn" element={<HtmlBasicsCourse />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/tutorials" element={<Tutorials />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/battle-royale" element={<BattleRoyale />} />
+                <Route path="/inbox" element={<Inbox />} />
+                <Route path="/inbox/:userId" element={<Inbox />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Router>
+          </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>

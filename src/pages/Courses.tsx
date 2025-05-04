@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -9,6 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter, Book, Code, Layout, Terminal, Search, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { PageNavigation } from "@/components/layout/PageNavigation";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Course data structure
 type Course = {
@@ -98,6 +100,7 @@ const Courses = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
+  const { t } = useLanguage();
   
   const filteredCourses = coursesData.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -124,7 +127,23 @@ const Courses = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-20">
+    <div className="container mx-auto px-4 py-8">
+      <PageNavigation />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center mb-12"
+      >
+        <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-blue-500">
+          Available Courses
+        </h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Explore our comprehensive collection of courses designed to help you master web development
+        </p>
+      </motion.div>
+
       <div className="flex flex-col space-y-8">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold">Courses</h1>

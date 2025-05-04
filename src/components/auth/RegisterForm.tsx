@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -13,15 +12,75 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, UserPlus, GraduationCap, Code2 } from "lucide-react";
+
+const experienceLevels = [
+  { value: "beginner", label: "Beginner (0-1 years)" },
+  { value: "intermediate", label: "Intermediate (1-3 years)" },
+  { value: "advanced", label: "Advanced (3-5 years)" },
+  { value: "expert", label: "Expert (5+ years)" },
+] as const;
+
+const programmingLanguages = [
+  "JavaScript",
+  "Python",
+  "Java",
+  "C++",
+  "Ruby",
+  "PHP",
+  "Swift",
+  "Go",
+  "Rust",
+  "TypeScript",
+] as const;
+
+const learningGoals = [
+  "Web Development",
+  "Mobile Development",
+  "Data Science",
+  "Machine Learning",
+  "Game Development",
+  "DevOps",
+  "Cloud Computing",
+  "Cybersecurity",
+  "Blockchain",
+  "UI/UX Design",
+] as const;
 
 const registerSchema = z.object({
   displayName: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  phone: z
+    .string()
+    .regex(/^\+213[567]\d{8}$/, {
+      message: "Please enter a valid Algerian phone number (+213XXXXXXXXX)",
+    }),
+  password: z
+    .string()
+    .min(8, { message: "Password must be at least 8 characters" }),
+  confirmPassword: z.string(),
+  experienceLevel: z.enum(["beginner", "intermediate", "advanced", "expert"]),
+  primaryLanguage: z.string().min(1, { message: "Please select your primary programming language" }),
+  otherLanguages: z.array(z.string()).optional(),
+  learningGoals: z.array(z.string()).min(1, { message: "Please select at least one learning goal" }),
+  preferredLearningTime: z.enum(["morning", "afternoon", "evening", "flexible"]),
+  newsletter: z.boolean().default(false),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: "You must accept the terms and conditions",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -39,15 +98,24 @@ export function RegisterForm() {
     defaultValues: {
       displayName: "",
       email: "",
+      phone: "+213",
       password: "",
       confirmPassword: "",
+      experienceLevel: "beginner",
+      primaryLanguage: "",
+      otherLanguages: [],
+      learningGoals: [],
+      preferredLearningTime: "flexible",
+      newsletter: false,
+      termsAccepted: false,
     },
   });
 
   async function onSubmit(data: RegisterFormValues) {
     setIsLoading(true);
     try {
-      await register(data.email, data.password, data.displayName);
+      const { confirmPassword, termsAccepted, ...userData } = data;
+      await register(userData.email, userData.password, userData.displayName, userData);
       navigate("/dashboard");
     } catch (error) {
       console.error("Registration error:", error);
@@ -57,16 +125,17 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-lg">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-        <CardDescription className="text-center">
-          Enter your information to create an account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Card className="w-full border-primary/10 bg-card/50 backdrop-blur-sm">
+      <CardContent className="pt-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Personal Information */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+                <UserPlus className="h-5 w-5" />
+                Personal Information
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
               name="displayName"
@@ -74,7 +143,12 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} className="bg-background" />
+                        <Input 
+                          placeholder="John Doe" 
+                          {...field} 
+                          className="bg-background/50"
+                          disabled={isLoading}
+                        />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -87,12 +161,199 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="email@example.com" {...field} className="bg-background" />
+                        <Input 
+                          placeholder="email@example.com" 
+                          {...field} 
+                          className="bg-background/50"
+                          disabled={isLoading}
+                        />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+              </div>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="+213XXXXXXXXX" 
+                        {...field} 
+                        className="bg-background/50"
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter your Algerian phone number starting with +213
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Programming Experience */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+                <Code2 className="h-5 w-5" />
+                Programming Experience
+              </div>
+              <FormField
+                control={form.control}
+                name="experienceLevel"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Experience Level</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={isLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-background/50">
+                          <SelectValue placeholder="Select your experience level" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {experienceLevels.map((level) => (
+                          <SelectItem key={level.value} value={level.value}>
+                            {level.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="primaryLanguage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary Programming Language</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={isLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-background/50">
+                          <SelectValue placeholder="Select your main language" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {programmingLanguages.map((lang) => (
+                          <SelectItem key={lang} value={lang}>
+                            {lang}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="preferredLearningTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preferred Learning Time</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={isLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-background/50">
+                          <SelectValue placeholder="Select preferred time" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="morning">Morning</SelectItem>
+                        <SelectItem value="afternoon">Afternoon</SelectItem>
+                        <SelectItem value="evening">Evening</SelectItem>
+                        <SelectItem value="flexible">Flexible</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Learning Goals */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+                <GraduationCap className="h-5 w-5" />
+                Learning Goals
+              </div>
+              <FormField
+                control={form.control}
+                name="learningGoals"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>What do you want to learn?</FormLabel>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {learningGoals.map((goal) => (
+                        <FormField
+                          key={goal}
+                          control={form.control}
+                          name="learningGoals"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={goal}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(goal)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, goal])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== goal
+                                            )
+                                          )
+                                    }}
+                                    disabled={isLoading}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {goal}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Security */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-primary">
+                <UserPlus className="h-5 w-5" />
+                Account Security
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
               name="password"
@@ -100,8 +361,17 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} className="bg-background" />
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          {...field} 
+                          className="bg-background/50"
+                          disabled={isLoading}
+                        />
                   </FormControl>
+                      <FormDescription>
+                        Must be at least 8 characters
+                      </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -113,26 +383,110 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} className="bg-background" />
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          {...field} 
+                          className="bg-background/50"
+                          disabled={isLoading}
+                        />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Sign Up"}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Preferences & Terms */}
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="newsletter"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Subscribe to newsletter
+                      </FormLabel>
+                      <FormDescription>
+                        Receive updates about new courses and features
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="termsAccepted"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Accept terms and conditions
+                      </FormLabel>
+                      <FormDescription>
+                        By creating an account, you agree to our{" "}
+                        <Link 
+                          to="/terms" 
+                          className="text-primary hover:underline"
+                          target="_blank"
+                        >
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link 
+                          to="/privacy" 
+                          className="text-primary hover:underline"
+                          target="_blank"
+                        >
+                          Privacy Policy
+                        </Link>
+                      </FormDescription>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full bg-primary/90 hover:bg-primary" 
+              disabled={isLoading}
+              size="lg"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create Account
+                </>
+              )}
             </Button>
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-4">
-        <div className="text-center text-sm text-muted-foreground mt-2">
-          Already have an account?{" "}
-          <Link to="/login" className="underline text-primary hover:text-primary/90">
-            Sign in
-          </Link>
-        </div>
-      </CardFooter>
     </Card>
   );
 }

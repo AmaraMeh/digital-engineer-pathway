@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Check, ChevronLeft, ChevronRight, Play, Book, Flag, Award, Zap, Code, FileCode } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import "../styles/confetti.css";
+import { motion } from "framer-motion";
+import { PageNavigation } from "@/components/layout/PageNavigation";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Lesson {
   id: string;
@@ -469,6 +471,7 @@ const CourseContent = () => {
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("content");
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // In a real app, we would fetch this from a database
@@ -629,7 +632,23 @@ const CourseContent = () => {
   }
 
   return (
-    <>
+    <div className="container mx-auto px-4 py-8">
+      <PageNavigation />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-12"
+      >
+        <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-blue-500">
+          {courseId}
+        </h1>
+        <p className="text-xl text-muted-foreground">
+          Start your learning journey with this comprehensive course
+        </p>
+      </motion.div>
+
       {showConfetti && (
         <div className="confetti-container">
           {[...Array(25)].map((_, i) => (
@@ -909,7 +928,7 @@ const CourseContent = () => {
           </Tabs>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

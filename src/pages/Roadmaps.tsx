@@ -1,13 +1,15 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Check, Lock, ChevronRight, Award, Star, Play } from "lucide-react";
-import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Check, Lock, ChevronRight, Award, Star, Play, Search, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import "../styles/confetti.css";
+import { PageNavigation } from "@/components/layout/PageNavigation";
+import { useLanguage } from "@/context/LanguageContext";
 
 type NodeType = "main" | "sub" | "topic";
 
@@ -212,21 +214,39 @@ const reactData: Node[] = [
 const allData: Node[] = [...htmlData, ...cssData, ...jsData, ...reactData];
 
 const Roadmaps = () => {
+  const { t } = useLanguage();
   const [activeRoadmap, setActiveRoadmap] = useState<string | null>(null);
   const [showNodeDetails, setShowNodeDetails] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
-  // Filtered data based on activeRoadmap
+  // Filtered data based on activeRoadmap and search query
   const filteredData = activeRoadmap 
     ? allData.filter(item => item.id === activeRoadmap)
     : allData;
+
+  const filteredBySearch = searchQuery.trim() === "" 
+    ? filteredData 
+    : filteredData.filter(node => {
+        const matches = node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       node.description.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        if (node.children) {
+          const childMatches = node.children.some(child => 
+            child.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            child.description.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+          return matches || childMatches;
+        }
+        
+        return matches;
+      });
 
   const nodeStatus = (node: Node): "completed" | "active" | "locked" => {
     if (node.completed) return "completed";
     if (node.status === "locked") return "locked";
     if (node.dependencies) {
-      // Check if all dependencies are completed
       const allDependenciesCompleted = node.dependencies.every(depId => {
-        // Find the dependency node
         const depNode = findNodeById(depId, allData);
         return depNode?.completed;
       });
@@ -235,7 +255,6 @@ const Roadmaps = () => {
     return "active";
   };
 
-  // Helper function to find a node by ID in the tree
   const findNodeById = (id: string, nodes: Node[]): Node | undefined => {
     for (const node of nodes) {
       if (node.id === id) return node;
@@ -247,19 +266,153 @@ const Roadmaps = () => {
     return undefined;
   };
 
+  const toggleExpand = (nodeId: string) => {
+    const newExpandedNodes = new Set(expandedNodes);
+    if (newExpandedNodes.has(nodeId)) {
+      newExpandedNodes.delete(nodeId);
+    } else {
+      newExpandedNodes.add(nodeId);
+    }
+    setExpandedNodes(newExpandedNodes);
+  };
+
+  const renderNode = (node: Node, level: number = 0) => {
+    const status = nodeStatus(node);
+    const isExpanded = expandedNodes.has(node.id);
+    const isSelected = showNodeDetails === node.id;
+
+    return (
+      <motion.div
+        key={node.id}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: level * 0.1 }}
+        className={`relative ${level > 0 ? 'ml-8' : ''}`}
+      >
+        <motion.div
+          className={`
+            group relative p-4 rounded-lg transition-all duration-300
+            ${isSelected ? 'bg-primary/10 border-primary' : 'bg-gray-900/50 border-gray-800'}
+            border-2 hover:border-primary/50
+          `}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowNodeDetails(node.id === showNodeDetails ? null : node.id)}
+        >
+          <div className="flex items-start gap-3">
+            <div className={`
+              flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+              ${status === "completed" ? "bg-green-500" : 
+                status === "locked" ? "bg-gray-600" : "bg-primary"}
+            `}>
+              {status === "completed" ? (
+                <Check className="w-4 h-4 text-white" />
+              ) : status === "locked" ? (
+                <Lock className="w-4 h-4 text-white" />
+              ) : (
+                <Play className="w-4 h-4 text-white" />
+              )}
+            </div>
+            
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
+                  {node.label}
+                </h3>
+                {node.tags && node.tags.length > 0 && (
+                  <Badge variant="outline" className="ml-2">
+                    {node.tags[0]}
+                  </Badge>
+                )}
+              </div>
+              
+              <p className="text-sm text-gray-400 mt-1">{node.description}</p>
+              
+              {node.progress !== undefined && (
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Progress</span>
+                    <span>{node.progress}%</span>
+                  </div>
+                  <Progress value={node.progress} className="h-1.5" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {node.children && node.children.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-2 text-gray-400 hover:text-primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpand(node.id);
+              }}
+            >
+              {isExpanded ? (
+                <ChevronRight className="w-4 h-4 rotate-90" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </Button>
+          )}
+        </motion.div>
+
+        <AnimatePresence>
+          {isExpanded && node.children && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mt-2 space-y-2"
+            >
+              {node.children.map(child => renderNode(child, level + 1))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    );
+  };
+
   return (
-    <div className="container mx-auto py-10 px-4">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+    <div className="container mx-auto px-4 py-8">
+      <PageNavigation />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center mb-12"
+      >
+        <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-blue-500">
           Learning Roadmaps
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl">
-          Follow structured learning paths to master web development skills. Each roadmap is designed to guide you from beginner to advanced concepts.
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Choose your path and follow our structured learning roadmaps to achieve your goals
         </p>
+      </motion.div>
+
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search topics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-gray-900/50 border-gray-800"
+            />
+            {searchQuery && (
+              <X
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 cursor-pointer"
+                onClick={() => setSearchQuery("")}
+              />
+            )}
       </div>
       
-      {/* Filter buttons */}
-      <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2">
         <Button 
           variant={activeRoadmap === null ? "default" : "outline"} 
           onClick={() => setActiveRoadmap(null)}
@@ -277,157 +430,21 @@ const Roadmaps = () => {
             {roadmap.label}
           </Button>
         ))}
+          </div>
       </div>
       
-      {/* Roadmap Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredData.map((roadmap) => (
+        <div className="grid grid-cols-1 gap-6">
+          {filteredBySearch.map(roadmap => (
           <motion.div
             key={roadmap.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            whileHover={{ y: -5 }}
-            className="h-full"
-          >
-            <Card className="h-full bg-white shadow-lg rounded-lg overflow-hidden border border-border/40 hover:border-primary/40 transition-all duration-300">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start mb-1">
-                  <CardTitle className="text-xl font-bold">{roadmap.label}</CardTitle>
-                  {roadmap.tags && roadmap.tags.length > 0 && (
-                    <Badge variant="outline" className="ml-2">
-                      {roadmap.tags[0]}
-                    </Badge>
-                  )}
-                </div>
-                <CardDescription className="line-clamp-2">{roadmap.description}</CardDescription>
-                
-                {/* Progress indicator */}
-                <div className="mt-4 space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span>Progress</span>
-                    <span>{roadmap.progress || 0}%</span>
-                  </div>
-                  <Progress value={roadmap.progress || 0} className="h-2" />
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pb-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Included Topics:</h3>
-                <ul className="space-y-3">
-                  {roadmap.children?.map((course) => (
-                    <motion.li 
-                      key={course.id} 
-                      className="relative"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                    >
-                      <div 
-                        className={`
-                          flex items-center p-2 rounded-md cursor-pointer
-                          ${showNodeDetails === course.id ? 'bg-muted' : 'hover:bg-muted/50'}
-                          ${nodeStatus(course) === "locked" ? "opacity-60" : ""}
-                        `}
-                        onClick={() => setShowNodeDetails(
-                          showNodeDetails === course.id ? null : course.id
-                        )}
-                      >
-                        <div className="mr-3">
-                          {nodeStatus(course) === "completed" ? (
-                            <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
-                              <Check className="h-4 w-4 text-white" />
-                            </div>
-                          ) : nodeStatus(course) === "locked" ? (
-                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                              <Lock className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                              <Play className="h-4 w-4 text-primary" />
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{course.label}</div>
-                          {course.progress !== undefined && (
-                            <div className="w-full bg-muted h-1 rounded-full mt-1">
-                              <div 
-                                className="h-full bg-primary rounded-full" 
-                                style={{ width: `${course.progress}%` }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Expanded details */}
-                      {showNodeDetails === course.id && (
-                        <motion.div 
-                          className="mt-2 ml-11 pl-2 border-l-2 border-muted"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <p className="text-sm text-muted-foreground mb-2">{course.description}</p>
-                          <Link 
-                            to={
-                              nodeStatus(course) !== "locked" 
-                                ? `/courses/${course.courseId}` 
-                                : "#"
-                            }
-                            className={nodeStatus(course) === "locked" ? "pointer-events-none" : ""}
-                          >
-                            <Button 
-                              size="sm" 
-                              variant={nodeStatus(course) === "locked" ? "outline" : "default"}
-                              className="w-full mt-2"
-                              disabled={nodeStatus(course) === "locked"}
-                            >
-                              {nodeStatus(course) === "locked" 
-                                ? "Locked" 
-                                : nodeStatus(course) === "completed"
-                                ? "Review Course" 
-                                : "Start Learning"}
-                            </Button>
-                          </Link>
-                          
-                          {nodeStatus(course) === "locked" && course.dependencies && (
-                            <div className="mt-2 text-xs text-muted-foreground">
-                              <p>Complete these first:</p>
-                              <ul className="mt-1 list-disc list-inside">
-                                {course.dependencies.map(depId => {
-                                  const dep = findNodeById(depId, allData);
-                                  return dep ? (
-                                    <li key={depId}>{dep.label}</li>
-                                  ) : null;
-                                })}
-                              </ul>
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </motion.li>
-                  ))}
-                </ul>
-              </CardContent>
-              
-              <CardFooter className="pt-2 border-t">
-                <div className="w-full flex justify-between items-center">
-                  <div className="flex items-center text-muted-foreground text-sm">
-                    <Award className="h-4 w-4 mr-1" />
-                    <span>{roadmap.children?.length || 0} topics</span>
-                  </div>
-                  <Link to={`/courses/${roadmap.id}`} className="text-primary hover:underline flex items-center text-sm font-medium">
-                    View Full Roadmap
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </div>
-              </CardFooter>
-            </Card>
+            >
+              {renderNode(roadmap)}
           </motion.div>
         ))}
+        </div>
       </div>
     </div>
   );

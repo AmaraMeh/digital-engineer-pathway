@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,24 +11,960 @@ import { InteractiveCodePlayground } from "./InteractiveCodePlayground";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageNavigation } from "@/components/layout/PageNavigation";
+import {
+  Layout,
+  List,
+  Type,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  FileText,
+  CheckCircle,
+  PenTool,
+  Rocket
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { LucideIcon } from 'lucide-react';
 
 interface QuizQuestion {
   question: string;
   options: string[];
   correctAnswer: number;
+  explanation: string;
 }
 
+interface CodeExercise {
+  id: string;
+  title: string;
+  description: string;
+  initialCode: string;
+  expectedOutput: string;
+  hints: string[];
+  solution: string;
+  explanation: string;
+}
+
+interface Lesson {
+  id: string;
+  title: string;
+  content: string;
+  videoUrl?: string;
+  codeExamples: {
+    title: string;
+    code: string;
+    explanation: string;
+  }[];
+  exercises: {
+    id: string;
+    title: string;
+    description: string;
+    initialCode: string;
+    expectedOutput: string;
+    hints: string[];
+    solution: string;
+    explanation: string;
+  }[];
+  quiz: {
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    explanation: string;
+  }[];
+  resources: {
+    title: string;
+    url: string;
+    type: 'article' | 'video' | 'documentation';
+  }[];
+}
+
+interface Module {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  description: string;
+  lessons: Lesson[];
+  prerequisites?: string[];
+  estimatedTime: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+}
+
+interface PlaygroundProps {
+  initialCode: string;
+  expectedOutput: string;
+  onComplete: () => void;
+}
+
+const defaultLesson = {
+  codeExamples: [],
+  exercises: [],
+  quiz: [],
+  resources: []
+};
+
+const COURSE_MODULES: Module[] = [
+  {
+    id: "introduction",
+    title: "Introduction to HTML",
+    icon: BookOpen,
+    description: "Learn the fundamentals of HTML and how to create your first web page",
+    estimatedTime: "2 hours",
+    difficulty: "beginner",
+    lessons: [
+      {
+        ...defaultLesson,
+        id: "what-is-html",
+        title: "What is HTML?",
+        content: `
+          HTML (HyperText Markup Language) is the standard markup language for creating web pages.
+          It describes the structure of a web page using elements and tags.
+
+          Key Points:
+          • HTML is not a programming language; it's a markup language
+          • HTML elements tell the browser how to display the content
+          • HTML tags label pieces of content such as "heading", "paragraph", "table", etc.
+
+          Example:
+          \`\`\`html
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>My First Page</title>
+            </head>
+            <body>
+              <h1>Welcome!</h1>
+              <p>This is my first HTML page.</p>
+            </body>
+          </html>
+          \`\`\`
+        `,
+        videoUrl: "https://example.com/html-intro-video",
+        codeExamples: [
+          {
+            title: "Basic HTML Structure",
+            code: `<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Page</title>
+  </head>
+  <body>
+    <h1>Hello World</h1>
+  </body>
+</html>`,
+            explanation: "This is the basic structure of every HTML document. The DOCTYPE declaration tells the browser this is an HTML5 document."
+          }
+        ],
+        exercises: [
+          {
+            id: "exercise-1",
+            title: "Create Your First HTML Page",
+            description: "Create a basic HTML page with a heading and paragraph",
+            initialCode: "<!-- Write your HTML code here -->",
+            expectedOutput: `<!DOCTYPE html>
+<html>
+  <head>
+    <title>My First Page</title>
+  </head>
+  <body>
+    <h1>Welcome to My Page</h1>
+    <p>This is my first HTML page.</p>
+  </body>
+</html>`,
+            hints: [
+              "Start with the DOCTYPE declaration",
+              "Add the html, head, and body tags",
+              "Include a title in the head section",
+              "Add a heading and paragraph in the body"
+            ],
+            solution: `<!DOCTYPE html>
+<html>
+  <head>
+    <title>My First Page</title>
+  </head>
+  <body>
+    <h1>Welcome to My Page</h1>
+    <p>This is my first HTML page.</p>
+  </body>
+</html>`,
+            explanation: "This exercise teaches you the basic structure of an HTML document and how to create simple content."
+          }
+        ],
+        quiz: [
+          {
+            question: "What does HTML stand for?",
+            options: [
+              "Hyper Text Markup Language",
+              "Hyperlinks and Text Markup Language",
+              "Home Tool Markup Language",
+              "Hyper Text Making Links"
+            ],
+            correctAnswer: 0,
+            explanation: "HTML stands for Hyper Text Markup Language. It's the standard markup language for creating web pages."
+          }
+        ],
+        resources: [
+          {
+            title: "MDN HTML Basics",
+            url: "https://developer.mozilla.org/en-US/docs/Learn/HTML",
+            type: "documentation"
+          },
+          {
+            title: "HTML5 Tutorial",
+            url: "https://www.w3schools.com/html/",
+            type: "article"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "text-formatting",
+    title: "Text & Formatting",
+    icon: Type,
+    description: "Learn how to format text and create structured content",
+    estimatedTime: "1.5 hours",
+    difficulty: "beginner",
+    lessons: [
+      {
+        ...defaultLesson,
+        id: "headings-paragraphs",
+        title: "Headings & Paragraphs",
+        content: `
+          Headings:
+          HTML has six levels of headings, from h1 to h6.
+          
+          \`\`\`html
+          <h1>Main Heading</h1>
+          <h2>Subheading</h2>
+          <h3>Section Heading</h3>
+          \`\`\`
+
+          Paragraphs:
+          The <p> tag defines a paragraph.
+
+          \`\`\`html
+          <p>This is a paragraph of text.</p>
+          <p>This is another paragraph.</p>
+          \`\`\`
+
+          Text Formatting:
+          \`\`\`html
+          <strong>Bold text</strong>
+          <em>Italic text</em>
+          <mark>Highlighted text</mark>
+          <sub>Subscript</sub>
+          <sup>Superscript</sup>
+          \`\`\`
+        `,
+        exercises: [
+          {
+            id: "exercise-2",
+            title: "Create a Blog Post",
+            description: "Create a blog post with headings, paragraphs, and formatted text",
+            initialCode: "<!-- Create your blog post here -->",
+            expectedOutput: `<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Blog Post</title>
+  </head>
+  <body>
+    <h1>My First Blog Post</h1>
+    <p>Welcome to my <strong>first</strong> blog post!</p>
+    <h2>About Me</h2>
+    <p>I'm learning <em>HTML</em> and having a great time.</p>
+    <h3>My Goals</h3>
+    <p>I want to become a <mark>web developer</mark>.</p>
+  </body>
+</html>`,
+            hints: [
+              "Use h1 for the main title",
+              "Use h2 and h3 for subheadings",
+              "Use p for paragraphs",
+              "Use strong, em, and mark for formatting"
+            ],
+            solution: `<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Blog Post</title>
+  </head>
+  <body>
+    <h1>My First Blog Post</h1>
+    <p>Welcome to my <strong>first</strong> blog post!</p>
+    <h2>About Me</h2>
+    <p>I'm learning <em>HTML</em> and having a great time.</p>
+    <h3>My Goals</h3>
+    <p>I want to become a <mark>web developer</mark>.</p>
+  </body>
+</html>`,
+            explanation: "This exercise teaches you how to structure content with headings and format text using HTML tags."
+          }
+        ],
+        quiz: [
+          {
+            question: "Which tag is used for the most important heading?",
+            options: ["h1", "h2", "h3", "h4"],
+            correctAnswer: 0,
+            explanation: "The h1 tag is used for the main heading of a page. It should be used only once per page and represents the most important heading."
+          }
+        ],
+        resources: [
+          {
+            title: "HTML Text Formatting",
+            url: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element#Text_content",
+            type: "documentation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: "lists-tables",
+    title: "Lists & Tables",
+    icon: List,
+    description: "Learn how to create structured content with lists and tables",
+    estimatedTime: "2 hours",
+    difficulty: "beginner",
+    lessons: [
+      {
+        ...defaultLesson,
+        id: "lists",
+        title: "HTML Lists",
+        content: `
+          Unordered Lists:
+          \`\`\`html
+          <ul>
+            <li>Item 1</li>
+            <li>Item 2</li>
+            <li>Item 3</li>
+          </ul>
+          \`\`\`
+
+          Ordered Lists:
+          \`\`\`html
+          <ol>
+            <li>First item</li>
+            <li>Second item</li>
+            <li>Third item</li>
+          </ol>
+          \`\`\`
+
+          Definition Lists:
+          \`\`\`html
+          <dl>
+            <dt>Term</dt>
+            <dd>Definition</dd>
+          </dl>
+          \`\`\`
+
+          Nested Lists:
+          \`\`\`html
+          <ul>
+            <li>Item 1
+              <ul>
+                <li>Subitem 1.1</li>
+                <li>Subitem 1.2</li>
+              </ul>
+            </li>
+          </ul>
+          \`\`\`
+        `,
+        codeExamples: [
+          {
+            title: "Basic List Example",
+            code: `<ul>
+  <li>First item</li>
+  <li>Second item</li>
+  <li>Third item</li>
+</ul>`,
+            explanation: "A simple unordered list with three items"
+          }
+        ],
+        exercises: [
+          {
+            id: "exercise-lists",
+            title: "Create a Navigation Menu",
+            description: "Create a navigation menu using an unordered list",
+            initialCode: "<!-- Create your navigation menu here -->",
+            expectedOutput: `<nav>
+  <ul>
+    <li><a href="#home">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>`,
+            hints: [
+              "Use the nav element to wrap your navigation",
+              "Create an unordered list with ul",
+              "Each menu item should be a li element",
+              "Use a elements for the links"
+            ],
+            solution: `<nav>
+  <ul>
+    <li><a href="#home">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>`,
+            explanation: "This exercise teaches you how to create a semantic navigation menu using lists."
+          }
+        ],
+        quiz: [
+          {
+            question: "Which tag is used to create an unordered list?",
+            options: ["<ol>", "<ul>", "<dl>", "<li>"],
+            correctAnswer: 1,
+            explanation: "The <ul> tag is used to create an unordered list, which typically displays with bullet points."
+          }
+        ],
+        resources: [
+          {
+            title: "MDN Lists Guide",
+            url: "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ul",
+            type: "documentation"
+          }
+        ]
+      },
+      {
+        ...defaultLesson,
+        id: "tables",
+        title: "HTML Tables",
+        content: `
+          // ... existing content ...
+        `,
+        codeExamples: [],
+        exercises: [],
+        quiz: [],
+        resources: []
+      }
+    ]
+  },
+  {
+    id: "links-images",
+    title: "Links & Images",
+    icon: LinkIcon,
+    description: "Learn how to add links and images to your web pages",
+    estimatedTime: "2 hours",
+    difficulty: "beginner",
+    lessons: [
+      {
+        ...defaultLesson,
+        id: "links",
+        title: "HTML Links",
+        content: `
+          Basic Links:
+          \`\`\`html
+          <a href="https://example.com">Visit Example</a>
+          \`\`\`
+
+          Link Attributes:
+          • href - URL or path
+          • target - Where to open the link
+          • rel - Relationship to target
+          
+          Examples:
+          \`\`\`html
+          <!-- External link -->
+          <a href="https://example.com" target="_blank">Open in new tab</a>
+
+          <!-- Internal link -->
+          <a href="/about">About page</a>
+
+          <!-- Email link -->
+          <a href="mailto:example@email.com">Send email</a>
+
+          <!-- Phone link -->
+          <a href="tel:+1234567890">Call us</a>
+
+          <!-- File download -->
+          <a href="/files/document.pdf" download>Download PDF</a>
+          \`\`\`
+        `,
+        codeExamples: [
+          {
+            title: "Basic Link Example",
+            code: `<a href="https://example.com">Visit Example</a>`,
+            explanation: "A simple link to an external website"
+          }
+        ],
+        exercises: [
+          {
+            id: "exercise-links",
+            title: "Create a Navigation Menu",
+            description: "Create a navigation menu with internal and external links",
+            initialCode: "<!-- Create your navigation menu here -->",
+            expectedOutput: `<nav>
+  <ul>
+    <li><a href="#home">Home</a></li>
+    <li><a href="https://example.com" target="_blank">External Link</a></li>
+    <li><a href="mailto:contact@example.com">Contact</a></li>
+  </ul>
+</nav>`,
+            hints: [
+              "Use nav for navigation sections",
+              "Use ul and li for menu structure",
+              "Use target='_blank' for external links",
+              "Use mailto: for email links"
+            ],
+            solution: `<nav>
+  <ul>
+    <li><a href="#home">Home</a></li>
+    <li><a href="https://example.com" target="_blank">External Link</a></li>
+    <li><a href="mailto:contact@example.com">Contact</a></li>
+  </ul>
+</nav>`,
+            explanation: "This exercise teaches you how to create different types of links in HTML."
+          }
+        ],
+        quiz: [
+          {
+            question: "Which attribute is used to specify the URL in a link?",
+            options: ["src", "href", "link", "url"],
+            correctAnswer: 1,
+            explanation: "The href attribute is used to specify the URL that the link points to."
+          }
+        ],
+        resources: [
+          {
+            title: "MDN Links Guide",
+            url: "https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML/Creating_hyperlinks",
+            type: "documentation"
+          }
+        ]
+      },
+      {
+        ...defaultLesson,
+        id: "images",
+        title: "HTML Images",
+        content: `
+          Basic Image:
+          \`\`\`html
+          <img src="image.jpg" alt="Description">
+          \`\`\`
+
+          Image Attributes:
+          • src - Image source
+          • alt - Alternative text
+          • width - Width in pixels
+          • height - Height in pixels
+          
+          Responsive Images:
+          \`\`\`html
+          <!-- Multiple sizes -->
+          <img srcset="small.jpg 300w,
+                      medium.jpg 600w,
+                      large.jpg 900w"
+               sizes="(max-width: 500px) 300px,
+                      (max-width: 900px) 600px,
+                      900px"
+               src="large.jpg"
+               alt="Responsive image">
+
+          <!-- Picture element -->
+          <picture>
+            <source media="(min-width: 800px)" srcset="large.jpg">
+            <source media="(min-width: 400px)" srcset="medium.jpg">
+            <img src="small.jpg" alt="Responsive image">
+          </picture>
+          \`\`\`
+        `,
+        codeExamples: [],
+        exercises: [],
+        quiz: [],
+        resources: []
+      }
+    ]
+  },
+  {
+    id: "forms",
+    title: "Forms & Input",
+    icon: PenTool,
+    description: "Learn how to create interactive forms",
+    estimatedTime: "3 hours",
+    difficulty: "intermediate",
+    lessons: [
+      {
+        ...defaultLesson,
+        id: "forms-basics",
+        title: "HTML Forms Basics",
+        content: `
+          Basic Form Structure:
+          \`\`\`html
+          <form action="/submit" method="post">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username">
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password">
+            
+            <button type="submit">Submit</button>
+          </form>
+          \`\`\`
+
+          Common Input Types:
+          \`\`\`html
+          <!-- Text input -->
+          <input type="text">
+
+          <!-- Password -->
+          <input type="password">
+
+          <!-- Email -->
+          <input type="email">
+
+          <!-- Number -->
+          <input type="number">
+
+          <!-- Checkbox -->
+          <input type="checkbox">
+
+          <!-- Radio buttons -->
+          <input type="radio">
+
+          <!-- File upload -->
+          <input type="file">
+
+          <!-- Date picker -->
+          <input type="date">
+
+          <!-- Color picker -->
+          <input type="color">
+          \`\`\`
+        `,
+        codeExamples: [
+          {
+            title: "Basic Form Example",
+            code: `<form action="/submit" method="post">
+  <label for="username">Username:</label>
+  <input type="text" id="username" name="username">
+  <button type="submit">Submit</button>
+</form>`,
+            explanation: "A simple form with a text input and submit button"
+          }
+        ],
+        exercises: [
+          {
+            id: "exercise-form",
+            title: "Create a Contact Form",
+            description: "Create a contact form with name, email, and message fields",
+            initialCode: "<!-- Create your contact form here -->",
+            expectedOutput: `<form action="/submit" method="post">
+  <div>
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
+  </div>
+  <div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+  </div>
+  <div>
+    <label for="message">Message:</label>
+    <textarea id="message" name="message" rows="4" required></textarea>
+  </div>
+  <button type="submit">Send Message</button>
+</form>`,
+            hints: [
+              "Use form element with action and method",
+              "Add labels for accessibility",
+              "Use appropriate input types",
+              "Add required attribute for validation"
+            ],
+            solution: `<form action="/submit" method="post">
+  <div>
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
+  </div>
+  <div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+  </div>
+  <div>
+    <label for="message">Message:</label>
+    <textarea id="message" name="message" rows="4" required></textarea>
+  </div>
+  <button type="submit">Send Message</button>
+</form>`,
+            explanation: "This exercise teaches you how to create a basic contact form with proper structure and validation."
+          }
+        ],
+        quiz: [
+          {
+            question: "Which attribute makes a form field required?",
+            options: ["mandatory", "required", "validate", "must"],
+            correctAnswer: 1,
+            explanation: "The required attribute is used to make a form field mandatory."
+          }
+        ],
+        resources: [
+          {
+            title: "MDN Forms Guide",
+            url: "https://developer.mozilla.org/en-US/docs/Learn/Forms",
+            type: "documentation"
+          }
+        ]
+      },
+      {
+        ...defaultLesson,
+        id: "forms-advanced",
+        title: "Advanced Form Features",
+        content: `
+          Form Validation:
+          \`\`\`html
+          <input type="text" required>
+          <input type="email" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$">
+          <input type="number" min="0" max="100">
+          \`\`\`
+
+          Select Dropdowns:
+          \`\`\`html
+          <select name="country">
+            <option value="">Select a country</option>
+            <option value="us">United States</option>
+            <option value="uk">United Kingdom</option>
+            <option value="ca">Canada</option>
+          </select>
+          \`\`\`
+
+          Textarea:
+          \`\`\`html
+          <textarea name="message" rows="4" cols="50">
+            Enter your message here...
+          </textarea>
+          \`\`\`
+
+          Fieldset & Legend:
+          \`\`\`html
+          <fieldset>
+            <legend>Personal Information</legend>
+            <label>Name: <input type="text"></label>
+            <label>Email: <input type="email"></label>
+          </fieldset>
+          \`\`\`
+        `
+      }
+    ]
+  },
+  {
+    id: "semantic-html",
+    title: "Semantic HTML",
+    icon: Layout,
+    description: "Learn how to use semantic HTML elements",
+    estimatedTime: "2 hours",
+    difficulty: "intermediate",
+    lessons: [
+      {
+        ...defaultLesson,
+        id: "semantic-elements",
+        title: "Semantic Elements",
+        content: `
+          Semantic HTML elements clearly describe their meaning:
+
+          Page Structure:
+          \`\`\`html
+          <header>
+            <nav>
+              <!-- Navigation content -->
+            </nav>
+          </header>
+
+          <main>
+            <article>
+              <section>
+                <!-- Article section -->
+              </section>
+            </article>
+            
+            <aside>
+              <!-- Sidebar content -->
+            </aside>
+          </main>
+
+          <footer>
+            <!-- Footer content -->
+          </footer>
+          \`\`\`
+
+          Content Elements:
+          \`\`\`html
+          <article>
+            <header>
+              <h1>Article Title</h1>
+              <time datetime="2024-03-20">March 20, 2024</time>
+            </header>
+            
+            <section>
+              <h2>Section Title</h2>
+              <p>Section content...</p>
+            </section>
+            
+            <footer>
+              <p>Author: John Doe</p>
+            </footer>
+          </article>
+          \`\`\`
+        `,
+        codeExamples: [],
+        exercises: [],
+        quiz: [],
+        resources: []
+      },
+      {
+        ...defaultLesson,
+        id: "semantic-best-practices",
+        title: "Semantic Best Practices",
+        content: `
+          Why Use Semantic HTML?
+          • Better accessibility
+          • Improved SEO
+          • Clearer code structure
+          • Easier maintenance
+
+          Common Semantic Elements:
+          \`\`\`html
+          <!-- Navigation -->
+          <nav>
+            <ul>
+              <li><a href="/">Home</a></li>
+              <li><a href="/about">About</a></li>
+            </ul>
+          </nav>
+
+          <!-- Main content -->
+          <main>
+            <article>
+              <header>
+                <h1>Article Title</h1>
+              </header>
+              
+              <section>
+                <h2>Section Title</h2>
+                <p>Content...</p>
+              </section>
+              
+              <aside>
+                <h3>Related Content</h3>
+                <!-- Related content -->
+              </aside>
+            </article>
+          </main>
+
+          <!-- Footer -->
+          <footer>
+            <address>
+              Contact: <a href="mailto:example@email.com">Email us</a>
+            </address>
+          </footer>
+          \`\`\`
+        `,
+        codeExamples: [],
+        exercises: [],
+        quiz: [],
+        resources: []
+      }
+    ]
+  },
+  {
+    id: "accessibility",
+    title: "HTML Accessibility",
+    icon: FileText,
+    description: "Learn how to make your HTML accessible",
+    estimatedTime: "2.5 hours",
+    difficulty: "intermediate",
+    lessons: [
+      {
+        ...defaultLesson,
+        id: "accessibility-basics",
+        title: "Accessibility Basics",
+        content: `
+          ARIA Roles & Attributes:
+          \`\`\`html
+          <!-- Navigation -->
+          <nav role="navigation" aria-label="Main navigation">
+            <!-- Navigation content -->
+          </nav>
+
+          <!-- Form fields -->
+          <input type="text" aria-label="Search" aria-required="true">
+
+          <!-- Interactive elements -->
+          <button aria-expanded="false" aria-controls="menu">
+            Toggle Menu
+          </button>
+          \`\`\`
+
+          Best Practices:
+          • Use semantic HTML elements
+          • Provide alternative text for images
+          • Use proper heading hierarchy
+          • Ensure keyboard navigation
+          • Add ARIA labels where needed
+        `,
+        codeExamples: [],
+        exercises: [],
+        quiz: [],
+        resources: []
+      },
+      {
+        ...defaultLesson,
+        id: "accessibility-advanced",
+        title: "Advanced Accessibility",
+        content: `
+          Skip Links:
+          \`\`\`html
+          <a href="#main-content" class="skip-link">
+            Skip to main content
+          </a>
+          \`\`\`
+
+          Focus Management:
+          \`\`\`html
+          <div tabindex="0">
+            Focusable element
+          </div>
+          \`\`\`
+
+          Live Regions:
+          \`\`\`html
+          <div aria-live="polite">
+            Content that updates dynamically
+          </div>
+          \`\`\`
+
+          Form Accessibility:
+          \`\`\`html
+          <form>
+            <label for="name">Name:</label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name"
+              aria-required="true"
+              aria-describedby="name-help"
+            >
+            <span id="name-help">
+              Enter your full name
+            </span>
+          </form>
+          \`\`\`
+        `,
+        codeExamples: [],
+        exercises: [],
+        quiz: [],
+        resources: []
+      }
+    ]
+  }
+];
+
 export const HtmlBasicsCourse = () => {
-  const [activeTab, setActiveTab] = useState("lesson-1");
+  const [activeModule, setActiveModule] = useState(COURSE_MODULES[0].id);
+  const [activeLesson, setActiveLesson] = useState(COURSE_MODULES[0].lessons[0].id);
   const [progress, setProgress] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState(false);
-  const [codeExercises, setCodeExercises] = useState<Record<string, { completed: boolean, code: string }>>({
-    'exercise-1': { completed: false, code: '<h1>My First Heading</h1>\n<p>My first paragraph.</p>' },
-    'exercise-2': { completed: false, code: '<ul>\n  <li>Item 1</li>\n  <li>Item 2</li>\n</ul>' },
-  });
+  const [codeExercises, setCodeExercises] = useState<Record<string, { completed: boolean, code: string }>>({});
   const [certificates, setCertificates] = useState<string[]>([]);
   const [confetti, setConfetti] = useState(false);
+  const [activeTab, setActiveTab] = useState<'content' | 'playground' | 'quiz' | 'exercises'>('content');
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -54,6 +989,9 @@ export const HtmlBasicsCourse = () => {
     };
   }, [currentUser?.uid]);
   
+  const currentModule = COURSE_MODULES.find(m => m.id === activeModule);
+  const currentLesson = currentModule?.lessons.find(l => l.id === activeLesson);
+  
   const lessons = [
     { id: "lesson-1", title: "Introduction to HTML" },
     { id: "lesson-2", title: "HTML Document Structure" },
@@ -72,7 +1010,8 @@ export const HtmlBasicsCourse = () => {
         "Home Tool Markup Language",
         "Hyper Text Making Links"
       ],
-      correctAnswer: 0
+      correctAnswer: 0,
+      explanation: "HTML stands for Hyper Text Markup Language. It's the standard markup language for creating web pages."
     },
     {
       question: "Which element is used to define the document's body?",
@@ -82,7 +1021,8 @@ export const HtmlBasicsCourse = () => {
         "<body>",
         "<html>"
       ],
-      correctAnswer: 2
+      correctAnswer: 2,
+      explanation: "The <body> tag is used to define the document's body."
     },
     {
       question: "Which tag creates a hyperlink?",
@@ -92,7 +1032,8 @@ export const HtmlBasicsCourse = () => {
         "<href>",
         "<hyperlink>"
       ],
-      correctAnswer: 1
+      correctAnswer: 1,
+      explanation: "The <a> tag is used to create a hyperlink."
     },
     {
       question: "Which HTML element is used to define the title of a document?",
@@ -102,7 +1043,8 @@ export const HtmlBasicsCourse = () => {
         "<title>",
         "<header>"
       ],
-      correctAnswer: 2
+      correctAnswer: 2,
+      explanation: "The <title> tag is used to define the title of a document."
     },
     {
       question: "How do you create a numbered list in HTML?",
@@ -112,7 +1054,8 @@ export const HtmlBasicsCourse = () => {
         "<nl>",
         "<ol>"
       ],
-      correctAnswer: 3
+      correctAnswer: 3,
+      explanation: "The <ol> tag is used to create a numbered list."
     }
   ];
   
@@ -130,7 +1073,7 @@ export const HtmlBasicsCourse = () => {
     const currentIndex = lessons.findIndex(lesson => lesson.id === currentId);
     if (currentIndex < lessons.length - 1) {
       const nextLesson = lessons[currentIndex + 1];
-      setActiveTab(nextLesson.id);
+      setActiveLesson(nextLesson.id);
       const newProgress = Math.round(((currentIndex + 1) / (lessons.length - 1)) * 100);
       saveProgress(newProgress);
     }
@@ -222,569 +1165,328 @@ export const HtmlBasicsCourse = () => {
     return selectedAnswers[questionIndex] === answerIndex ? "bg-blue-100 border-blue-500 dark:bg-blue-900/20" : "";
   };
 
-  return (
-    <div className="container mx-auto px-4 py-12">
-      {confetti && (
-        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-confetti"></div>
+  // Render playground only if exercises exist
+  const renderPlayground = () => {
+    if (!currentLesson?.exercises?.length) {
+      return (
+        <div className="text-center p-4">
+          <p className="text-muted-foreground">No exercises available for this lesson.</p>
         </div>
-      )}
-      
-      <motion.div 
-        className="flex flex-col lg:flex-row gap-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="lg:w-1/3">
-          <Card className="sticky top-24 hover:shadow-lg transition-all border-2 border-primary/20 overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-              <CardTitle className="font-bold flex items-center">
-                <Book className="mr-2 h-5 w-5 text-primary" />
-                HTML Basics
-              </CardTitle>
-              <CardDescription>Learn the fundamentals of HTML</CardDescription>
-              <div className="mt-2 flex gap-2">
-                <Badge className="bg-primary/10 text-primary hover:bg-primary/20 dark:hover:bg-primary/30">Beginner</Badge>
-                <Badge variant="outline" className="border-amber-500/30 text-amber-500">Top Course</Badge>
-              </div>
+      );
+    }
+
+    return (
+      <InteractiveCodePlayground
+        initialCode={currentLesson.exercises[0].initialCode}
+        expectedOutput={currentLesson.exercises[0].expectedOutput}
+        onComplete={() => handleCompleteExercise(currentLesson.exercises[0].id)}
+      />
+    );
+  };
+
+  // Render exercises only if they exist
+  const renderExercises = () => {
+    if (!currentLesson?.exercises?.length) {
+      return (
+        <div className="text-center p-4">
+          <p className="text-muted-foreground">No exercises available for this lesson.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {currentLesson.exercises.map((exercise) => (
+          <Card key={exercise.id}>
+            <CardHeader>
+              <CardTitle>{exercise.title}</CardTitle>
+              <CardDescription>{exercise.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="mb-4">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium">Course Progress</span>
-                  <span className="text-sm font-medium">{progress}%</span>
+              <div className="space-y-4">
+                <InteractiveCodePlayground
+                  initialCode={exercise.initialCode}
+                  expectedOutput={exercise.expectedOutput}
+                  onComplete={() => handleCompleteExercise(exercise.id)}
+                />
+                <div className="space-y-2">
+                  <h4 className="font-medium">Hints</h4>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {exercise.hints.map((hint, index) => (
+                      <li key={index} className="text-sm text-muted-foreground">
+                        {hint}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <Progress value={progress} className="h-2" />
               </div>
-              
-              <div className="space-y-2">
-                {lessons.map((lesson, index) => (
-                  <motion.div 
-                    key={lesson.id} 
-                    className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
-                      activeTab === lesson.id ? "border-primary bg-primary/5 dark:bg-primary/10" : "hover:bg-accent"
-                    }`}
-                    onClick={() => setActiveTab(lesson.id)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 ${
-                      progress >= (index / (lessons.length - 1)) * 100 ? "bg-primary text-white" : "bg-muted"
-                    }`}>
-                      {progress >= (index / (lessons.length - 1)) * 100 ? <Check className="h-4 w-4" /> : index + 1}
-                    </div>
-                    <span>{lesson.title}</span>
-                  </motion.div>
-                ))}
-              </div>
-              
-              {certificates.includes('html-basics') && (
-                <motion.div 
-                  className="mt-6 p-4 border border-amber-500/30 rounded-lg bg-amber-50/50 dark:bg-amber-900/10"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-amber-100 dark:bg-amber-900/30 rounded-full p-2">
-                      <Award className="h-5 w-5 text-amber-500" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-amber-700 dark:text-amber-400">Certificate Earned</h4>
-                      <p className="text-sm text-amber-600 dark:text-amber-300">HTML Basics - Complete</p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
             </CardContent>
           </Card>
+        ))}
+      </div>
+    );
+  };
+
+  // Render quiz only if it exists
+  const renderQuiz = () => {
+    if (!currentLesson?.quiz?.length) {
+      return (
+        <div className="text-center p-4">
+          <p className="text-muted-foreground">No quiz available for this lesson.</p>
         </div>
-        
-        <div className="lg:w-2/3">
-          <Card className="hover:shadow-lg transition-all border-2 border-primary/20">
-            <CardHeader className="border-b">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-3 lg:grid-cols-6 mb-4 bg-muted/50">
-                  {lessons.map(lesson => (
-                    <TabsTrigger key={lesson.id} value={lesson.id} className="text-xs md:text-sm">
-                      {lesson.title}
-                    </TabsTrigger>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {currentLesson.quiz.map((question, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <CardTitle>Question {index + 1}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="font-medium">{question.question}</p>
+                <div className="space-y-2">
+                  {question.options.map((option, optionIndex) => (
+                    <Button
+                      key={optionIndex}
+                      variant={selectedAnswers[index] === optionIndex ? "default" : "outline"}
+                      className="w-full justify-start"
+                      onClick={() => handleAnswerSelect(index, optionIndex)}
+                    >
+                      {option}
+                    </Button>
                   ))}
-                </TabsList>
-                
-                <TabsContent value="lesson-1" className="animate-fade-in m-0 p-0">
-                  <CardTitle className="text-2xl font-bold flex items-center">
-                    <BookOpen className="mr-2 h-5 w-5 text-primary" />
-                    Introduction to HTML
-                  </CardTitle>
-                  <CardDescription>Understanding the basics of HTML</CardDescription>
-                  
-                  <div className="mt-6 space-y-6">
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">What is HTML?</h3>
-                      <p className="mb-4">HTML stands for <span className="font-bold">H</span>yper<span className="font-bold">T</span>ext <span className="font-bold">M</span>arkup <span className="font-bold">L</span>anguage and is the standard markup language for creating web pages.</p>
-                      
-                      <div className="bg-muted p-3 rounded-md my-4 font-mono text-sm overflow-x-auto">
-                        <code>{`<!DOCTYPE html>
-<html>
-  <head>
-    <title>My First HTML Page</title>
-  </head>
-  <body>
-    <h1>Hello, World!</h1>
-    <p>This is my first web page.</p>
-  </body>
-</html>`}</code>
-                      </div>
-                      
-                      <p>HTML uses elements (tags) to structure content on a webpage.</p>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">Key Concepts</h3>
-                      <ul className="list-disc pl-5 space-y-2">
-                        <li>HTML documents have a .html extension</li>
-                        <li>HTML tags usually come in pairs: opening tag and closing tag</li>
-                        <li>The closing tag has a forward slash before the tag name</li>
-                        <li>HTML elements can be nested (contain other elements)</li>
-                      </ul>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.3 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">Interactive Example</h3>
-                      <p className="mb-4">See how changing HTML affects the page in real-time:</p>
-                      
-                      <InteractiveCodePlayground
-                        initialHtml="<h1>Welcome to HTML!</h1>\n<p>This is a simple example.</p>\n<button>Click me</button>"
-                        initialCss="h1 { color: #3b82f6; }\nbutton { background-color: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }"
-                        initialJs="const button = document.querySelector('button');\nbutton.addEventListener('click', () => {\n  alert('Button clicked!');\n});"
-                        height="250px"
-                      />
-                    </motion.div>
+                </div>
+                {showResults && (
+                  <div className={cn(
+                    "p-4 rounded-lg",
+                    selectedAnswers[index] === question.correctAnswer
+                      ? "bg-green-500/10 text-green-500"
+                      : "bg-red-500/10 text-red-500"
+                  )}>
+                    <p className="font-medium">
+                      {selectedAnswers[index] === question.correctAnswer
+                        ? "Correct!"
+                        : "Incorrect"}
+                    </p>
+                    <p className="text-sm mt-2">{question.explanation}</p>
                   </div>
-                </TabsContent>
-                
-                <TabsContent value="lesson-2" className="animate-fade-in m-0 p-0">
-                  <CardTitle className="text-2xl font-bold flex items-center">
-                    <BookOpen className="mr-2 h-5 w-5 text-primary" />
-                    HTML Document Structure
-                  </CardTitle>
-                  <CardDescription>Learn about the basic structure of an HTML document</CardDescription>
-                  
-                  <div className="mt-6 space-y-6">
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">Basic Document Structure</h3>
-                      <p className="mb-4">Every HTML document follows a standard structure:</p>
-                      
-                      <div className="bg-muted p-3 rounded-md my-4 font-mono text-sm overflow-x-auto">
-                        <code>{`<!DOCTYPE html>
-<html>
-  <head>
-    <!-- Meta information, title, CSS links, etc. -->
-    <title>Page Title</title>
-  </head>
-  <body>
-    <!-- Visible content of the page -->
-  </body>
-</html>`}</code>
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">Important Elements</h3>
-                      <ul className="list-disc pl-5 space-y-2">
-                        <li><code className="bg-muted px-1 rounded">&lt;!DOCTYPE html&gt;</code> - Declares the document type</li>
-                        <li><code className="bg-muted px-1 rounded">&lt;html&gt;</code> - The root element</li>
-                        <li><code className="bg-muted px-1 rounded">&lt;head&gt;</code> - Contains meta information</li>
-                        <li><code className="bg-muted px-1 rounded">&lt;title&gt;</code> - Defines the page title</li>
-                        <li><code className="bg-muted px-1 rounded">&lt;body&gt;</code> - Contains the visible content</li>
-                      </ul>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.3 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">Visual Structure</h3>
-                      <div className="my-4 p-4 bg-gradient-to-r from-primary/5 to-transparent rounded-lg">
-                        <div className="border-2 border-primary p-3 rounded-lg">
-                          <div className="font-semibold text-center mb-2">&lt;!DOCTYPE html&gt;</div>
-                          <div className="border-2 border-blue-500 p-3 rounded-lg">
-                            <div className="font-semibold text-center mb-2">&lt;html&gt;</div>
-                            
-                            <div className="border-2 border-amber-500 p-3 rounded-lg mb-4">
-                              <div className="font-semibold text-center mb-2">&lt;head&gt;</div>
-                              <div className="border border-dashed border-amber-500 p-2 rounded-lg text-center">
-                                &lt;meta&gt;, &lt;title&gt;, &lt;link&gt;, etc.
-                              </div>
-                            </div>
-                            
-                            <div className="border-2 border-green-500 p-3 rounded-lg">
-                              <div className="font-semibold text-center mb-2">&lt;body&gt;</div>
-                              <div className="border border-dashed border-green-500 p-2 rounded-lg text-center">
-                                &lt;h1&gt;, &lt;p&gt;, &lt;div&gt;, etc.
-                              </div>
-                            </div>
-                            
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        {!showResults && (
+          <Button
+            className="w-full"
+            onClick={handleSubmitQuiz}
+            disabled={!currentLesson?.quiz || Object.keys(selectedAnswers).length !== currentLesson.quiz.length}
+          >
+            Submit Quiz
+          </Button>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90">
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-br from-primary/20 via-purple-500/10 to-blue-500/5 blur-3xl opacity-50 dark:opacity-30 -z-10 rounded-full transform -translate-y-1/2"></div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        <PageNavigation />
+
+        <div className="mb-8">
+          <Badge className="mb-4">
+            <BookOpen className="w-4 h-4 mr-2" />
+            HTML Basics Course
+          </Badge>
+          <h1 className="text-4xl font-bold mb-2">Learn HTML</h1>
+          <p className="text-xl text-muted-foreground">
+            Master the fundamentals of HTML and web development
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-[250px_1fr]">
+          {/* Course Navigation */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Course Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Progress value={progress} className="mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {progress}% Complete
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Modules</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[400px]">
+                  {COURSE_MODULES.map((module) => {
+                    const Icon = module.icon;
+                    return (
+                      <div key={module.id} className="space-y-1">
+                        <button
+                          className={cn(
+                            "w-full text-left px-4 py-2 hover:bg-muted/50 transition-colors",
+                            activeModule === module.id && "bg-primary/10"
+                          )}
+                          onClick={() => {
+                            setActiveModule(module.id);
+                            setActiveLesson(module.lessons[0].id);
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            <span>{module.title}</span>
                           </div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground text-center">Visual representation of HTML document structure</p>
-                    </motion.div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="lesson-3" className="animate-fade-in m-0 p-0">
-                  <CardTitle className="text-2xl font-bold flex items-center">
-                    <BookOpen className="mr-2 h-5 w-5 text-primary" />
-                    HTML Elements
-                  </CardTitle>
-                  <CardDescription>Explore common HTML elements and their uses</CardDescription>
-                  
-                  <div className="mt-6 space-y-6">
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">Text Elements</h3>
-                      <ul className="list-disc pl-5 space-y-2">
-                        <li><code className="bg-muted px-1 rounded">&lt;h1&gt; to &lt;h6&gt;</code> - Heading elements</li>
-                        <li><code className="bg-muted px-1 rounded">&lt;p&gt;</code> - Paragraph</li>
-                        <li><code className="bg-muted px-1 rounded">&lt;strong&gt;</code> - Bold text</li>
-                        <li><code className="bg-muted px-1 rounded">&lt;em&gt;</code> - Italic text</li>
-                      </ul>
-                      
-                      <div className="bg-muted p-3 rounded-md my-4 font-mono text-sm overflow-x-auto">
-                        <code>{`<h1>This is a Heading 1</h1>
-<h2>This is a Heading 2</h2>
-<p>This is a paragraph with <strong>bold text</strong> and <em>italic text</em>.</p>`}</code>
-                      </div>
-                      
-                      <div className="mt-4 p-4 border rounded bg-white dark:bg-gray-900">
-                        <h1 className="text-2xl font-bold">This is a Heading 1</h1>
-                        <h2 className="text-xl font-bold">This is a Heading 2</h2>
-                        <p>This is a paragraph with <strong>bold text</strong> and <em>italic text</em>.</p>
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">Links and Images</h3>
-                      
-                      <div className="bg-muted p-3 rounded-md my-4 font-mono text-sm overflow-x-auto">
-                        <code>{`<!-- Link -->
-<a href="https://example.com">Visit Example.com</a>
-
-<!-- Image -->
-<img src="https://via.placeholder.com/150" alt="Description of the image">`}</code>
-                      </div>
-                      
-                      <p>The <code className="bg-muted px-1 rounded">href</code> attribute specifies the URL, while the <code className="bg-muted px-1 rounded">src</code> attribute points to the image location. The <code className="bg-muted px-1 rounded">alt</code> attribute provides alternative text for accessibility.</p>
-                      
-                      <div className="mt-4 p-4 border rounded bg-white dark:bg-gray-900">
-                        <a href="#" className="text-blue-500 hover:underline">Visit Example.com</a>
-                        <br />
-                        <img src="https://via.placeholder.com/150" alt="Placeholder" className="mt-2" />
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="p-4 border rounded-lg bg-card"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.3 }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">Lists</h3>
-                      
-                      <div className="bg-muted p-3 rounded-md my-4 font-mono text-sm overflow-x-auto">
-                        <code>{`<!-- Ordered List -->
-<ol>
-  <li>First item</li>
-  <li>Second item</li>
-</ol>
-
-<!-- Unordered List -->
-<ul>
-  <li>Item</li>
-  <li>Another item</li>
-</ul>`}</code>
-                      </div>
-                      
-                      <div className="mt-4 p-4 border rounded bg-white dark:bg-gray-900">
-                        <strong>Ordered List:</strong>
-                        <ol className="list-decimal pl-5 mt-1">
-                          <li>First item</li>
-                          <li>Second item</li>
-                        </ol>
-                        
-                        <strong className="mt-4 block">Unordered List:</strong>
-                        <ul className="list-disc pl-5 mt-1">
-                          <li>Item</li>
-                          <li>Another item</li>
-                        </ul>
-                      </div>
-                    </motion.div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="playground" className="animate-fade-in m-0 p-0">
-                  <CardTitle className="text-2xl font-bold flex items-center">
-                    <Terminal className="mr-2 h-5 w-5 text-primary" />
-                    Interactive Code Playground
-                  </CardTitle>
-                  <CardDescription>Practice HTML, CSS, and JavaScript together</CardDescription>
-                  
-                  <div className="mt-6">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <InteractiveCodePlayground 
-                        initialHtml="<!DOCTYPE html>\n<html>\n<head>\n  <title>My Playground</title>\n</head>\n<body>\n  <h1>Welcome to HTML Playground</h1>\n  <p>Start editing this code to practice your HTML skills!</p>\n  \n  <!-- Try adding elements below -->\n  \n</body>\n</html>"
-                        initialCss="body {\n  font-family: Arial, sans-serif;\n  line-height: 1.6;\n  padding: 20px;\n  max-width: 800px;\n  margin: 0 auto;\n}\n\nh1 {\n  color: #3b82f6;\n  border-bottom: 2px solid #e2e8f0;\n  padding-bottom: 10px;\n}\n\n/* Add your CSS here */"
-                        initialJs="// You can add JavaScript here\nconsole.log('Playground loaded!');\n\n// Example: Add an event listener\n// document.querySelector('h1').addEventListener('click', () => {\n//   alert('You clicked the heading!');\n// });"
-                      />
-                    </motion.div>
-                    
-                    <div className="mt-8 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                      <h3 className="font-bold mb-2 flex items-center">
-                        <Sparkles className="mr-2 h-4 w-4 text-blue-500" />
-                        Challenge Yourself:
-                      </h3>
-                      <ol className="list-decimal pl-5 space-y-2">
-                        <li>Create a simple webpage with a heading, paragraph, and an image</li>
-                        <li>Add a navigation menu with 3 links</li>
-                        <li>Create a simple contact form with name, email, and message fields</li>
-                        <li>Use CSS to style your page, adding colors and margins</li>
-                        <li>Add a simple JavaScript interaction (like an alert when clicking a button)</li>
-                      </ol>
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        These exercises will help you practice what you've learned. Feel free to experiment!
-                      </p>
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="exercises" className="animate-fade-in m-0 p-0">
-                  <CardTitle className="text-2xl font-bold flex items-center">
-                    <Code className="mr-2 h-5 w-5 text-primary" />
-                    Coding Exercises
-                  </CardTitle>
-                  <CardDescription>Complete these exercises to practice HTML skills</CardDescription>
-                  
-                  <div className="mt-6 space-y-8">
-                    <motion.div
-                      className="border rounded-lg overflow-hidden"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <div className="bg-muted p-4 border-b flex items-center justify-between">
-                        <h3 className="font-semibold">Exercise 1: Basic HTML Structure</h3>
-                        {codeExercises['exercise-1'].completed && (
-                          <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-500">
-                            <Check className="h-3 w-3 mr-1" /> Completed
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <div className="p-4">
-                        <p className="mb-4">Create a basic HTML document with a heading and a paragraph.</p>
-                        
-                        <InteractiveCodePlayground
-                          initialHtml={codeExercises['exercise-1'].code}
-                          initialCss=""
-                          initialJs=""
-                          height="200px"
-                        />
-                        
-                        <div className="mt-4 flex justify-end">
-                          <Button 
-                            onClick={() => handleCompleteExercise('exercise-1')} 
-                            disabled={codeExercises['exercise-1'].completed}
-                            className="gap-1"
-                          >
-                            <Flag className="h-4 w-4 mr-1" />
-                            {codeExercises['exercise-1'].completed ? "Completed" : "Mark as Complete"}
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div
-                      className="border rounded-lg overflow-hidden"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                    >
-                      <div className="bg-muted p-4 border-b flex items-center justify-between">
-                        <h3 className="font-semibold">Exercise 2: Working with Lists</h3>
-                        {codeExercises['exercise-2'].completed && (
-                          <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-500">
-                            <Check className="h-3 w-3 mr-1" /> Completed
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <div className="p-4">
-                        <p className="mb-4">Create an unordered list with at least 3 items.</p>
-                        
-                        <InteractiveCodePlayground
-                          initialHtml={codeExercises['exercise-2'].code}
-                          initialCss=""
-                          initialJs=""
-                          height="200px"
-                        />
-                        
-                        <div className="mt-4 flex justify-end">
-                          <Button 
-                            onClick={() => handleCompleteExercise('exercise-2')} 
-                            disabled={codeExercises['exercise-2'].completed}
-                            className="gap-1"
-                          >
-                            <Flag className="h-4 w-4 mr-1" />
-                            {codeExercises['exercise-2'].completed ? "Completed" : "Mark as Complete"}
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="quiz" className="animate-fade-in m-0 p-0">
-                  <CardTitle className="text-2xl font-bold flex items-center">
-                    <BookOpen className="mr-2 h-5 w-5 text-primary" />
-                    Test Your Knowledge
-                  </CardTitle>
-                  <CardDescription>Answer these questions about HTML basics</CardDescription>
-                  
-                  <div className="mt-6 space-y-6">
-                    {quizQuestions.map((quizQuestion, qIndex) => (
-                      <motion.div 
-                        key={qIndex} 
-                        className="p-4 border rounded-lg bg-card"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: qIndex * 0.1 }}
-                      >
-                        <h3 className="font-bold text-lg mb-3">Q{qIndex + 1}: {quizQuestion.question}</h3>
-                        
-                        <div className="space-y-2">
-                          {quizQuestion.options.map((option, oIndex) => (
-                            <div 
-                              key={oIndex}
-                              className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                                getHighlightClass(qIndex, oIndex)
-                              }`}
-                              onClick={() => !showResults && handleAnswerSelect(qIndex, oIndex)}
-                            >
-                              <div className="flex items-center">
-                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${
-                                  selectedAnswers[qIndex] === oIndex ? "bg-primary border-primary" : ""
-                                }`}>
-                                  {selectedAnswers[qIndex] === oIndex && <div className="w-2 h-2 rounded-full bg-white"></div>}
-                                </div>
-                                <span>{option}</span>
-                                {showResults && isAnswerCorrect(qIndex, oIndex) && (
-                                  <Check className="ml-auto h-5 w-5 text-green-500" />
+                        </button>
+                        {activeModule === module.id && (
+                          <div className="pl-6 space-y-1">
+                            {module.lessons.map((lesson) => (
+                              <button
+                                key={lesson.id}
+                                className={cn(
+                                  "w-full text-left px-4 py-1.5 text-sm hover:bg-muted/50 transition-colors",
+                                  activeLesson === lesson.id && "text-primary"
                                 )}
+                                onClick={() => setActiveLesson(lesson.id)}
+                              >
+                                {lesson.title}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Lesson Content */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Badge variant="outline" className="mb-2">
+                      {currentModule?.title}
+                    </Badge>
+                    <CardTitle>{currentLesson?.title}</CardTitle>
+                  </div>
+                  <Tabs defaultValue="content" value={activeTab} onValueChange={(value) => setActiveTab(value as 'content' | 'playground' | 'quiz' | 'exercises')}>
+                    <TabsList>
+                      <TabsTrigger value="content">
+                        <Book className="w-4 h-4 mr-2" />
+                        Content
+                      </TabsTrigger>
+                      <TabsTrigger value="playground">
+                        <Code className="w-4 h-4 mr-2" />
+                        Playground
+                      </TabsTrigger>
+                      <TabsTrigger value="exercises">
+                        <Terminal className="w-4 h-4 mr-2" />
+                        Exercises
+                      </TabsTrigger>
+                      <TabsTrigger value="quiz">
+                        <Award className="w-4 h-4 mr-2" />
+                        Quiz
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="content" value={activeTab} onValueChange={(value) => setActiveTab(value as 'content' | 'playground' | 'quiz' | 'exercises')}>
+                  <TabsContent value="content">
+                    <div className="space-y-6">
+                      {currentLesson?.videoUrl && (
+                        <div className="aspect-video rounded-lg overflow-hidden">
+                          <iframe
+                            src={currentLesson.videoUrl}
+                            className="w-full h-full"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
+                      <div className="prose dark:prose-invert max-w-none">
+                        {currentLesson?.content.split('\n').map((line, index) => (
+                          <p key={index}>{line}</p>
+                        ))}
+                      </div>
+                      {currentLesson?.codeExamples && (
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-semibold">Code Examples</h3>
+                          {currentLesson.codeExamples.map((example, index) => (
+                            <div key={index} className="space-y-2">
+                              <h4 className="font-medium">{example.title}</h4>
+                              <div className="bg-muted p-4 rounded-lg">
+                                <pre className="whitespace-pre-wrap">{example.code}</pre>
                               </div>
+                              <p className="text-sm text-muted-foreground">{example.explanation}</p>
                             </div>
                           ))}
                         </div>
-                        
-                        {showResults && (
-                          <div className="mt-3 text-sm">
-                            <div className={
-                              selectedAnswers[qIndex] === quizQuestion.correctAnswer 
-                                ? "text-green-600 dark:text-green-400"
-                                : "text-red-600 dark:text-red-400"
-                            }>
-                              {selectedAnswers[qIndex] === quizQuestion.correctAnswer 
-                                ? "✓ Correct!" 
-                                : `✗ Incorrect. The correct answer is: ${quizQuestion.options[quizQuestion.correctAnswer]}`
-                              }
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="playground">
+                    {renderPlayground()}
+                  </TabsContent>
+
+                  <TabsContent value="exercises">
+                    {renderExercises()}
+                  </TabsContent>
+
+                  <TabsContent value="quiz">
+                    {renderQuiz()}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {currentLesson?.resources && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Additional Resources</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {currentLesson.resources.map((resource, index) => (
+                      <a
+                        key={index}
+                        href={resource.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        {resource.type === 'video' && <Play className="w-4 h-4" />}
+                        {resource.type === 'article' && <FileText className="w-4 h-4" />}
+                        {resource.type === 'documentation' && <Book className="w-4 h-4" />}
+                        <span>{resource.title}</span>
+                        <ExternalLink className="w-4 h-4 ml-auto" />
+                      </a>
                     ))}
                   </div>
-                </TabsContent>
-              </Tabs>
-            </CardHeader>
-            
-            <CardFooter className="flex justify-between border-t p-4">
-              {activeTab !== "lesson-1" && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    const currentIndex = lessons.findIndex(lesson => lesson.id === activeTab);
-                    if (currentIndex > 0) {
-                      setActiveTab(lessons[currentIndex - 1].id);
-                    }
-                  }}
-                  className="gap-1"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left h-4 w-4 mr-1"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-                  Previous
-                </Button>
-              )}
-              <div></div>
-              {activeTab === "quiz" ? (
-                <Button 
-                  onClick={handleSubmitQuiz} 
-                  disabled={Object.keys(selectedAnswers).length < quizQuestions.length || showResults}
-                  className="group gap-1 bg-gradient-to-r from-primary to-purple-600"
-                >
-                  {showResults ? "Completed!" : "Submit Answers"}
-                  {!showResults && <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
-                </Button>
-              ) : (
-                <Button onClick={() => handleNextLesson(activeTab)} className="group gap-1 bg-gradient-to-r from-primary to-purple-600">
-                  Next Lesson
-                  <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              )}
-            </CardFooter>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

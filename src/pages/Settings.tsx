@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -25,14 +24,18 @@ import {
   Globe, 
   Volume2, 
   Eye, 
-  Mail
+  Mail,
+  Settings as SettingsIcon
 } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
+import { useLanguage } from "@/context/LanguageContext";
+import { PageNavigation } from "@/components/layout/PageNavigation";
 
 const Settings = () => {
   const { currentUser } = useAuth();
   const [saving, setSaving] = useState(false);
-  const [theme, setTheme] = useState("system");
-  const [language, setLanguage] = useState("en");
+  const { theme, setTheme, isDarkMode } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const [fontSize, setFontSize] = useState([16]);
   const [notifications, setNotifications] = useState({
     email: true,
@@ -89,7 +92,9 @@ const Settings = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-20">
+    <div className="container mx-auto px-4 py-8">
+      <PageNavigation />
+      
       <div className="max-w-4xl mx-auto">
         <div className="mb-10">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">Settings</h1>
@@ -105,7 +110,7 @@ const Settings = () => {
                     value="appearance" 
                     className="justify-start px-4 py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
-                    <Palette className="h-4 w-4 mr-2" />
+                    <SettingsIcon className="h-4 w-4 mr-2" />
                     Appearance
                   </TabsTrigger>
                   <TabsTrigger 
@@ -137,8 +142,8 @@ const Settings = () => {
               <TabsContent value="appearance" className="m-0">
                 <Card className="hover:shadow-lg transition-all">
                   <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Palette className="h-5 w-5 mr-2" />
+                    <CardTitle className="flex items-center gap-2">
+                      <SettingsIcon className="h-5 w-5" />
                       Appearance Settings
                     </CardTitle>
                     <CardDescription>
@@ -148,48 +153,52 @@ const Settings = () => {
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
                       <div>
-                        <h3 className="font-medium mb-3">Theme</h3>
-                        <div className="grid grid-cols-3 gap-3">
-                          <div 
-                            className={`flex flex-col items-center p-3 border rounded-lg cursor-pointer ${theme === "light" ? "border-primary bg-primary/5" : "hover:bg-accent"}`}
-                            onClick={() => setTheme("light")}
+                        <h3 className="font-medium mb-3">{t('settings.theme')}</h3>
+                        <div className="flex gap-2">
+                          <Button
+                            variant={theme === 'light' ? 'default' : 'outline'}
+                            onClick={() => setTheme('light')}
+                            className="flex items-center gap-2"
                           >
-                            <Sun className="h-6 w-6 mb-2" />
-                            <span className="text-sm">Light</span>
-                          </div>
-                          <div 
-                            className={`flex flex-col items-center p-3 border rounded-lg cursor-pointer ${theme === "dark" ? "border-primary bg-primary/5" : "hover:bg-accent"}`}
-                            onClick={() => setTheme("dark")}
+                            <Sun className="h-4 w-4" />
+                            {t('settings.theme.light')}
+                          </Button>
+                          <Button
+                            variant={theme === 'dark' ? 'default' : 'outline'}
+                            onClick={() => setTheme('dark')}
+                            className="flex items-center gap-2"
                           >
-                            <Moon className="h-6 w-6 mb-2" />
-                            <span className="text-sm">Dark</span>
-                          </div>
-                          <div 
-                            className={`flex flex-col items-center p-3 border rounded-lg cursor-pointer ${theme === "system" ? "border-primary bg-primary/5" : "hover:bg-accent"}`}
-                            onClick={() => setTheme("system")}
+                            <Moon className="h-4 w-4" />
+                            {t('settings.theme.dark')}
+                          </Button>
+                          <Button
+                            variant={theme === 'system' ? 'default' : 'outline'}
+                            onClick={() => setTheme('system')}
                           >
-                            <Laptop className="h-6 w-6 mb-2" />
-                            <span className="text-sm">System</span>
-                          </div>
+                            {t('settings.theme.system')}
+                          </Button>
                         </div>
                       </div>
                       
                       <Separator />
                       
                       <div>
-                        <h3 className="font-medium mb-3">Language</h3>
-                        <Select value={language} onValueChange={setLanguage}>
-                          <SelectTrigger className="w-full max-w-xs">
-                            <SelectValue placeholder="Select Language" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="es">Spanish</SelectItem>
-                            <SelectItem value="fr">French</SelectItem>
-                            <SelectItem value="de">German</SelectItem>
-                            <SelectItem value="zh">Chinese</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <h3 className="font-medium mb-3">{t('settings.language')}</h3>
+                        <div className="flex items-center gap-4">
+                          <Select value={language} onValueChange={(value: 'en' | 'fr' | 'ar') => setLanguage(value)}>
+                            <SelectTrigger className="w-[200px]">
+                              <div className="flex items-center gap-2">
+                                <Globe className="h-4 w-4" />
+                                <SelectValue />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="en">English</SelectItem>
+                              <SelectItem value="fr">Français</SelectItem>
+                              <SelectItem value="ar">العربية</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       
                       <Separator />

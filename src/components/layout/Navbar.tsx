@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -45,6 +44,8 @@ export function Navbar() {
     { name: "Home", path: "/" },
     { name: "Roadmaps", path: "/roadmaps" },
     { name: "Courses", path: "/courses" },
+    { name: "Leaderboard", path: "/leaderboard" },
+    { name: "Battle Royale", path: "/battle-royale" },
   ];
 
   const userInitials = currentUser?.displayName

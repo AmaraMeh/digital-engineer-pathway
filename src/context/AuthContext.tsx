@@ -1,15 +1,27 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { User } from "firebase/auth";
 import { auth, signIn, signUp, logout } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useToast } from "@/components/ui/use-toast";
 
+interface UserData {
+  email: string;
+  password: string;
+  displayName: string;
+  phone?: string;
+  experienceLevel?: string;
+  primaryLanguage?: string;
+  otherLanguages?: string[];
+  learningGoals?: string[];
+  preferredLearningTime?: string;
+  newsletter?: boolean;
+}
+
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  register: (email: string, password: string, displayName: string) => Promise<User>;
+  register: (email: string, password: string, displayName: string, additionalData?: Omit<UserData, "email" | "password" | "displayName">) => Promise<User>;
   logOut: () => Promise<void>;
 }
 
@@ -59,9 +71,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const register = async (email: string, password: string, displayName: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    displayName: string,
+    additionalData?: Omit<UserData, "email" | "password" | "displayName">
+  ) => {
     try {
-      const user = await signUp(email, password, displayName);
+      const user = await signUp(email, password, displayName, additionalData);
       toast({
         title: "Account created!",
         description: "Welcome to Code Pathway!",
