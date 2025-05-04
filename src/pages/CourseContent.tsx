@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronLeft, ChevronRight, Play, Book, Flag, Award } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Play, Book, Flag, Award, Zap, Code, FileCode } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import "../styles/confetti.css";
 
 interface Lesson {
   id: string;
@@ -465,6 +466,9 @@ const CourseContent = () => {
   const [activeLesson, setActiveLesson] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [course, setCourse] = useState<Course | null>(null);
+  const [showConfetti, setShowConfetti] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("content");
+  const navigate = useNavigate();
 
   useEffect(() => {
     // In a real app, we would fetch this from a database
@@ -510,7 +514,12 @@ const CourseContent = () => {
     };
     
     setCourse(updatedCourse);
-    setProgress((completedCount / course.totalLessons) * 100);
+    const newProgress = (completedCount / course.totalLessons) * 100;
+    setProgress(newProgress);
+
+    // Show confetti when completing a lesson
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 3000);
   };
 
   const findCurrentLessonIndex = () => {
@@ -585,6 +594,12 @@ const CourseContent = () => {
     return null;
   };
 
+  const handleStartCourse = () => {
+    if (course && course.id === 'html-basics') {
+      navigate('/courses/html-basics/learn');
+    }
+  };
+
   const currentLesson = getCurrentLesson();
 
   if (!currentUser) {
@@ -614,138 +629,287 @@ const CourseContent = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-10">
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-          <div>
-            <Link to="/courses" className="flex items-center text-muted-foreground mb-2">
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to Courses
-            </Link>
-            <h1 className="text-3xl font-bold">{course.title}</h1>
-            <p className="text-muted-foreground mt-1">{course.description}</p>
+    <>
+      {showConfetti && (
+        <div className="confetti-container">
+          {[...Array(25)].map((_, i) => (
+            <div key={i} className={`confetti-${i + 1} confetti-piece`}></div>
+          ))}
+        </div>
+      )}
+      
+      <div className="container mx-auto px-4 py-10">
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div>
+              <Link to="/courses" className="flex items-center text-muted-foreground mb-2">
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Back to Courses
+              </Link>
+              <h1 className="text-3xl font-bold">{course.title}</h1>
+              <p className="text-muted-foreground mt-1">{course.description}</p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="text-sm text-muted-foreground">Your progress</div>
+                <div className="font-medium">{Math.round(progress)}% complete</div>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-primary font-medium text-sm">{Math.round(progress)}%</span>
+              </div>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">Your progress</div>
-              <div className="font-medium">{Math.round(progress)}% complete</div>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-medium text-sm">{Math.round(progress)}%</span>
-            </div>
-          </div>
+          <Progress value={progress} className="h-2" />
         </div>
-        
-        <Progress value={progress} className="h-2" />
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="lg:col-span-1 order-2 lg:order-1 h-fit sticky top-10">
-          <CardHeader className="p-4">
-            <CardTitle className="text-lg">Course Content</CardTitle>
-            <CardDescription>
-              {course.completedLessons} of {course.totalLessons} lessons completed
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0 pb-2">
-            <Accordion type="multiple" className="w-full">
-              {course.sections.map((section, idx) => (
-                <AccordionItem value={section.id} key={section.id} className="border-0 px-4">
-                  <AccordionTrigger className="py-3 text-sm hover:no-underline">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{idx + 1}. {section.title}</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="pl-2 border-l space-y-1">
-                      {section.lessons.map((lesson, lessonIdx) => (
-                        <div 
-                          key={lesson.id} 
-                          className={`flex items-center gap-2 py-2 px-3 rounded-md text-sm cursor-pointer transition-colors ${activeLesson === lesson.id ? 'bg-primary text-primary-foreground' : lesson.completed ? 'text-muted-foreground' : 'hover:bg-muted'}`}
-                          onClick={() => setActiveLesson(lesson.id)}
+
+        <div className="mb-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full md:w-auto grid-cols-3 mb-8">
+              <TabsTrigger value="content">Course Content</TabsTrigger>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="playground">Code Playground</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="content" className="animate-in fade-in">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <Card className="lg:col-span-1 order-2 lg:order-1 h-fit sticky top-10">
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-lg">Course Content</CardTitle>
+                    <CardDescription>
+                      {course.completedLessons} of {course.totalLessons} lessons completed
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0 pb-2">
+                    <Accordion type="multiple" className="w-full">
+                      {course.sections.map((section, idx) => (
+                        <AccordionItem value={section.id} key={section.id} className="border-0 px-4">
+                          <AccordionTrigger className="py-3 text-sm hover:no-underline">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{idx + 1}. {section.title}</span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="pl-2 border-l space-y-1">
+                              {section.lessons.map((lesson, lessonIdx) => (
+                                <div 
+                                  key={lesson.id} 
+                                  className={`flex items-center gap-2 py-2 px-3 rounded-md text-sm cursor-pointer transition-colors ${activeLesson === lesson.id ? 'bg-primary text-primary-foreground' : lesson.completed ? 'text-muted-foreground' : 'hover:bg-muted'}`}
+                                  onClick={() => setActiveLesson(lesson.id)}
+                                >
+                                  {lesson.completed ? (
+                                    <div className="h-5 w-5 rounded-full flex items-center justify-center bg-green-500">
+                                      <Check className="h-3 w-3 text-white" />
+                                    </div>
+                                  ) : (
+                                    <div className={`h-5 w-5 rounded-full flex items-center justify-center border ${activeLesson === lesson.id ? 'border-white' : 'border-muted-foreground'}`}>
+                                      <span className="text-xs">{lessonIdx + 1}</span>
+                                    </div>
+                                  )}
+                                  <span>{lesson.title}</span>
+                                  <span className="ml-auto text-xs opacity-70">{lesson.duration}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </CardContent>
+                  <CardFooter className="p-4 pt-0">
+                    <Button onClick={handleStartCourse} className="w-full" variant="outline">
+                      <Zap className="mr-2 h-4 w-4" />
+                      Interactive Learning Mode
+                    </Button>
+                  </CardFooter>
+                </Card>
+                
+                <div className="lg:col-span-3 order-1 lg:order-2">
+                  <Card className="animate-in fade-in">
+                    <CardHeader>
+                      {currentLesson && (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <Badge variant="outline" className="mb-2">
+                              {currentLesson.type === "video" ? 
+                                <Play className="h-3 w-3 mr-1" /> : 
+                                currentLesson.type === "quiz" ? 
+                                <FileCode className="h-3 w-3 mr-1" /> : 
+                                currentLesson.type === "exercise" ? 
+                                <Code className="h-3 w-3 mr-1" /> : 
+                                <Book className="h-3 w-3 mr-1" />}
+                              {currentLesson.type === "video" ? "Video" : 
+                               currentLesson.type === "quiz" ? "Quiz" : 
+                               currentLesson.type === "exercise" ? "Exercise" : "Reading"}
+                            </Badge>
+                            {currentLesson.completed && (
+                              <Badge variant="secondary" className="mb-2">
+                                <Check className="h-3 w-3 mr-1" /> Completed
+                              </Badge>
+                            )}
+                          </div>
+                          <CardTitle>{currentLesson.title}</CardTitle>
+                        </>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      {currentLesson && (
+                        <div className="prose prose-lg dark:prose-invert max-w-none">
+                          <div dangerouslySetInnerHTML={{ __html: currentLesson.content }} />
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="flex justify-between border-t p-6">
+                      <Button 
+                        variant="outline"
+                        onClick={goToPrevLesson}
+                        disabled={findCurrentLessonIndex().sectionIndex === 0 && findCurrentLessonIndex().lessonIndex === 0}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        Previous Lesson
+                      </Button>
+                      
+                      <div className="flex gap-2">
+                        {currentLesson && !currentLesson.completed && (
+                          <Button onClick={() => handleLessonComplete(currentLesson.id)}>
+                            <Flag className="h-4 w-4 mr-2" />
+                            Mark as Complete
+                          </Button>
+                        )}
+                        
+                        <Button 
+                          onClick={goToNextLesson}
+                          disabled={findCurrentLessonIndex().sectionIndex === course.sections.length - 1 && 
+                                    findCurrentLessonIndex().lessonIndex === course.sections[course.sections.length - 1].lessons.length - 1}
                         >
-                          {lesson.completed ? (
-                            <div className="h-5 w-5 rounded-full flex items-center justify-center bg-green-500">
-                              <Check className="h-3 w-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className={`h-5 w-5 rounded-full flex items-center justify-center border ${activeLesson === lesson.id ? 'border-white' : 'border-muted-foreground'}`}>
-                              <span className="text-xs">{lessonIdx + 1}</span>
-                            </div>
-                          )}
-                          <span>{lesson.title}</span>
-                          <span className="ml-auto text-xs opacity-70">{lesson.duration}</span>
+                          Next Lesson
+                          <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="overview" className="animate-in fade-in">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Course Overview</CardTitle>
+                  <CardDescription>Everything you need to know about this course</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">What You'll Learn</h3>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <li className="flex items-start">
+                        <Check className="h-5 w-5 mr-2 text-green-500" />
+                        <span>Understand HTML document structure</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check className="h-5 w-5 mr-2 text-green-500" />
+                        <span>Create semantic HTML markup</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check className="h-5 w-5 mr-2 text-green-500" />
+                        <span>Build forms and collect user input</span>
+                      </li>
+                      <li className="flex items-start">
+                        <Check className="h-5 w-5 mr-2 text-green-500" />
+                        <span>Apply validation to form fields</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Course Structure</h3>
+                    <p className="text-muted-foreground mb-4">
+                      This course is organized into {course.sections.length} sections with a total of {course.totalLessons} lessons.
+                    </p>
+                    <div className="space-y-4">
+                      {course.sections.map((section, idx) => (
+                        <div key={section.id}>
+                          <h4 className="font-medium">{idx + 1}. {section.title}</h4>
+                          <p className="text-sm text-muted-foreground">{section.lessons.length} lessons</p>
                         </div>
                       ))}
                     </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </CardContent>
-        </Card>
-        
-        <div className="lg:col-span-3 order-1 lg:order-2">
-          <Card className="animate-in fade-in">
-            <CardHeader>
-              {currentLesson && (
-                <>
-                  <div className="flex justify-between items-center">
-                    <Badge variant="outline" className="mb-2">
-                      {currentLesson.type === "video" ? "Video" : 
-                       currentLesson.type === "quiz" ? "Quiz" : 
-                       currentLesson.type === "exercise" ? "Exercise" : "Reading"}
-                    </Badge>
-                    {currentLesson.completed && (
-                      <Badge variant="secondary" className="mb-2">
-                        <Check className="h-3 w-3 mr-1" /> Completed
-                      </Badge>
-                    )}
                   </div>
-                  <CardTitle>{currentLesson.title}</CardTitle>
-                </>
-              )}
-            </CardHeader>
-            <CardContent>
-              {currentLesson && (
-                <div className="prose prose-lg dark:prose-invert max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: currentLesson.content }} />
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-between border-t p-6">
-              <Button 
-                variant="outline"
-                onClick={goToPrevLesson}
-                disabled={findCurrentLessonIndex().sectionIndex === 0 && findCurrentLessonIndex().lessonIndex === 0}
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous Lesson
-              </Button>
-              
-              <div className="flex gap-2">
-                {currentLesson && !currentLesson.completed && (
-                  <Button onClick={() => handleLessonComplete(currentLesson.id)}>
-                    <Flag className="h-4 w-4 mr-2" />
-                    Mark as Complete
+                  
+                  <Separator />
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Prerequisites</h3>
+                    <p className="text-muted-foreground">
+                      No prior knowledge required. This course is suitable for complete beginners.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button className="w-full" onClick={() => setActiveTab("content")}>
+                    Start Learning
                   </Button>
-                )}
-                
-                <Button 
-                  onClick={goToNextLesson}
-                  disabled={findCurrentLessonIndex().sectionIndex === course.sections.length - 1 && 
-                            findCurrentLessonIndex().lessonIndex === course.sections[course.sections.length - 1].lessons.length - 1}
-                >
-                  Next Lesson
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="playground" className="animate-in fade-in">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Interactive Code Playground</CardTitle>
+                  <CardDescription>Practice your HTML skills in real-time</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[400px]">
+                    <div className="border rounded-md p-4 bg-muted/30 h-full">
+                      <div className="text-sm font-medium mb-2">HTML</div>
+                      <pre className="h-[calc(100%-30px)] overflow-auto p-2 rounded bg-muted font-mono text-sm">
+                        {`<!DOCTYPE html>
+<html>
+<head>
+  <title>My HTML Page</title>
+</head>
+<body>
+  <h1>Hello World!</h1>
+  <p>Welcome to my first HTML page.</p>
+  
+  <!-- Try adding more elements here -->
+  
+</body>
+</html>`}
+                      </pre>
+                    </div>
+                    <div className="border rounded-md p-4 h-full">
+                      <div className="text-sm font-medium mb-2">Preview</div>
+                      <div className="h-[calc(100%-30px)] overflow-auto p-2 rounded border">
+                        <h1 className="text-2xl font-bold">Hello World!</h1>
+                        <p>Welcome to my first HTML page.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <Button variant="outline">
+                      Reset Example
+                    </Button>
+                    <Button>
+                      Run Code
+                    </Button>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Note: This is a simplified playground. For a full interactive experience, try the lessons.
+                  </p>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
