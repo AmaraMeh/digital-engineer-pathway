@@ -21,7 +21,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "react-router-dom";
-import { Bell, Shield, User } from "lucide-react";
+import { Bell, Shield, User, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const profileSchema = z.object({
   displayName: z.string().min(2, {
@@ -32,11 +33,11 @@ const profileSchema = z.object({
   }),
   bio: z.string().max(160, {
     message: "Bio must not be longer than 160 characters.",
-  }).optional(),
+  }).optional().or(z.literal("")),
   website: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal("")),
-  github: z.string().optional(),
-  twitter: z.string().optional(),
-  linkedin: z.string().optional(),
+  github: z.string().optional().or(z.literal("")),
+  twitter: z.string().optional().or(z.literal("")),
+  linkedin: z.string().optional().or(z.literal("")),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -44,6 +45,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 const Profile = () => {
   const { currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -61,13 +63,19 @@ const Profile = () => {
   const onSubmit = async (data: ProfileFormValues) => {
     setLoading(true);
     try {
-      console.log("Profile update data:", data);
       // Here you would implement the actual update logic with Firebase
-      // For now, we'll just simulate a delay
+      console.log("Profile update data:", data);
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("Profile updated successfully!");
-    } catch (error) {
-      console.error("Error updating profile:", error);
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Update failed",
+        description: error.message || "Failed to update profile.",
+      });
     } finally {
       setLoading(false);
     }
@@ -93,43 +101,42 @@ const Profile = () => {
   return (
     <div className="container mx-auto px-4 py-20">
       <div className="grid gap-8">
-        <h1 className="text-3xl font-bold">Your Profile</h1>
+        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">Your Profile</h1>
         
         <Tabs defaultValue="general" className="w-full">
           <div className="flex flex-col md:flex-row gap-8">
             <div className="md:w-64">
-              <div className="flex flex-col items-center py-8 px-4 bg-card border rounded-lg mb-6">
-                <Avatar className="h-24 w-24 mb-4">
+              <div className="flex flex-col items-center py-8 px-4 bg-card border rounded-lg mb-6 hover:shadow-lg transition-all">
+                <Avatar className="h-24 w-24 mb-4 border-2 border-primary">
                   <AvatarImage src={currentUser?.photoURL || ""} alt={currentUser?.displayName || ""} />
-                  <AvatarFallback className="bg-primary text-2xl font-bold text-white">{userInitials}</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-2xl font-bold text-primary-foreground">{userInitials}</AvatarFallback>
                 </Avatar>
                 <h2 className="text-xl font-bold">{currentUser?.displayName || "User"}</h2>
                 <p className="text-sm text-muted-foreground">{currentUser?.email}</p>
                 <div className="mt-3 flex flex-wrap justify-center gap-2">
-                  <Badge variant="outline">Frontend Developer</Badge>
-                  <Badge variant="outline">Student</Badge>
+                  <Badge variant="secondary" className="animate-fade-in">Learning</Badge>
                 </div>
               </div>
               
-              <div className="bg-card border rounded-lg overflow-hidden">
+              <div className="bg-card border rounded-lg overflow-hidden hover:shadow-lg transition-all">
                 <TabsList className="flex flex-col h-auto w-full p-0 bg-transparent">
                   <TabsTrigger 
                     value="general" 
-                    className="justify-start px-4 py-2 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className="justify-start px-4 py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <User className="h-4 w-4 mr-2" />
                     General
                   </TabsTrigger>
                   <TabsTrigger 
                     value="notifications" 
-                    className="justify-start px-4 py-2 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className="justify-start px-4 py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <Bell className="h-4 w-4 mr-2" />
                     Notifications
                   </TabsTrigger>
                   <TabsTrigger 
                     value="security" 
-                    className="justify-start px-4 py-2 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className="justify-start px-4 py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <Shield className="h-4 w-4 mr-2" />
                     Security
@@ -140,7 +147,7 @@ const Profile = () => {
             
             <div className="flex-1">
               <TabsContent value="general" className="m-0">
-                <Card>
+                <Card className="hover:shadow-lg transition-all">
                   <CardHeader>
                     <CardTitle>General information</CardTitle>
                     <CardDescription>
@@ -300,8 +307,13 @@ const Profile = () => {
                           </div>
                         </div>
                         
-                        <Button type="submit" disabled={loading}>
-                          {loading ? "Saving..." : "Save changes"}
+                        <Button type="submit" disabled={loading} className="group">
+                          {loading ? "Saving..." : (
+                            <>
+                              <Save className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                              Save changes
+                            </>
+                          )}
                         </Button>
                       </form>
                     </Form>
@@ -310,7 +322,7 @@ const Profile = () => {
               </TabsContent>
               
               <TabsContent value="notifications" className="m-0">
-                <Card>
+                <Card className="hover:shadow-lg transition-all">
                   <CardHeader>
                     <CardTitle>Notification settings</CardTitle>
                     <CardDescription>
@@ -318,15 +330,47 @@ const Profile = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">
-                      Coming soon. Notification preferences will be available in a future update.
-                    </p>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <h3 className="font-medium">Email Notifications</h3>
+                          <p className="text-sm text-muted-foreground">Receive notifications about course updates</p>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="mr-2" id="email-notifications" defaultChecked />
+                          <label htmlFor="email-notifications" className="text-sm">Enable</label>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <h3 className="font-medium">Course Completion</h3>
+                          <p className="text-sm text-muted-foreground">Get notified when you complete a course</p>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="mr-2" id="course-completion" defaultChecked />
+                          <label htmlFor="course-completion" className="text-sm">Enable</label>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                          <h3 className="font-medium">New Courses</h3>
+                          <p className="text-sm text-muted-foreground">Get notified when new courses are added</p>
+                        </div>
+                        <div className="flex items-center">
+                          <input type="checkbox" className="mr-2" id="new-courses" defaultChecked />
+                          <label htmlFor="new-courses" className="text-sm">Enable</label>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
+                  <CardFooter>
+                    <Button>Save notification preferences</Button>
+                  </CardFooter>
                 </Card>
               </TabsContent>
               
               <TabsContent value="security" className="m-0">
-                <Card>
+                <Card className="hover:shadow-lg transition-all">
                   <CardHeader>
                     <CardTitle>Security settings</CardTitle>
                     <CardDescription>
@@ -341,6 +385,16 @@ const Profile = () => {
                           Change your password to keep your account secure.
                         </p>
                         <Button variant="outline">Change password</Button>
+                      </div>
+                      
+                      <Separator className="my-6" />
+                      
+                      <div>
+                        <h3 className="font-medium mb-1">Two-Factor Authentication</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Add an extra layer of security to your account.
+                        </p>
+                        <Button variant="outline">Setup 2FA</Button>
                       </div>
                       
                       <Separator className="my-6" />

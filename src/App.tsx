@@ -16,6 +16,7 @@ import Courses from "./pages/Courses";
 import CourseContent from "./pages/CourseContent";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import { HtmlBasicsCourse } from "./components/courses/HtmlBasicsCourse";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/roadmaps" element={<Roadmaps />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/courses/:courseId" element={<CourseContent />} />
+              <Route path="/courses/html-basics/learn" element={<HtmlBasicsCourse />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
