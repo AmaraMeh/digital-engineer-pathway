@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Book, Code, Terminal, Laptop, Server, ArrowRight, Play, Award, ChevronRight, Sparkles, Heart, Star, Rocket, Moon, Sun, Twitter, Github, Linkedin, Youtube } from "lucide-react";
+import { Book, Code, Terminal, Laptop, Server, ArrowRight, Play, Award, ChevronRight, Sparkles, Heart, Star, Rocket, Moon, Sun, Twitter, Github, Linkedin, Youtube, Users, MessageSquare, Calendar, Trophy, Share2, Bell, Settings, Plus } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 const features = [
@@ -163,6 +163,7 @@ const Index = () => {
   const [currentTab, setCurrentTab] = useState("courses");
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const { theme, setTheme, isDarkMode } = useTheme();
+  const navigate = useNavigate();
   
   const handleStartLearning = () => {
     window.location.href = '/courses';
@@ -170,6 +171,10 @@ const Index = () => {
 
   const handleExploreRoadmaps = () => {
     window.location.href = '/roadmaps';
+  };
+
+  const handleDzConnect = () => {
+    navigate('/dzconnect');
   };
 
   const toggleTheme = () => {
@@ -206,99 +211,40 @@ const Index = () => {
         </motion.div>
         
         {/* Hero Section */}
-        <section className="container mx-auto px-4 py-20 relative">
-          <div className="max-w-4xl mx-auto text-center relative">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Badge className="mb-6 px-4 py-1.5 text-sm bg-primary/10 text-primary">
-                <Rocket className="w-4 h-4 mr-2" />
-                Developed by Amara Mehdi
-              </Badge>
-            </motion.div>
-            
-            <motion.h1
-              className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-blue-500"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              Transform Your Future with CodePathway<span className="relative">
-                <span className="absolute -bottom-1.5 left-0 w-full h-1.5 bg-gradient-to-r from-primary/60 to-purple-500/60 rounded-full"></span>
-              </span>
-            </motion.h1>
-            
-            <motion.p
-              className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              Join thousands of learners who have transformed their careers through our interactive, project-based learning platform. Master in-demand skills and build real-world projects.
-            </motion.p>
-
-            {/* Developer Credit Badge */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="mb-8"
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border shadow-sm">
-                <Code className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Crafted with passion by Amara Mehdi</span>
-              </div>
-            </motion.div>
-            
-            <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 group"
-                onClick={handleStartLearning}
+        <section className="relative py-20 px-4 min-h-[80vh] flex items-center">
+          <div className="container mx-auto">
+            <div className="max-w-4xl mx-auto text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                Start Learning Now
-                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-2"
-                onClick={handleExploreRoadmaps}
-              >
-                Explore Roadmaps
-              </Button>
-            </motion.div>
-            
-            <motion.div
-              className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              {features.map((feature, idx) => (
-                <motion.div
-                  key={feature.title}
-                  className="flex flex-col items-center p-6 rounded-xl bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 hover:shadow-lg transition-all"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.8 + idx * 0.1 }}
-                  whileHover={{ y: -5 }}
-                >
-                  <div className={`p-3 rounded-full mb-4 ${feature.color}`}>
-                    <feature.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="font-bold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-center text-muted-foreground">{feature.description}</p>
-                </motion.div>
-              ))}
-            </motion.div>
+                <Badge className="mb-4 px-4 py-1.5 text-sm bg-primary/10 text-primary">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Digital Engineer Pathway
+                </Badge>
+                <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                  Master Web Development with Our Interactive Platform
+                </h1>
+                <p className="text-xl text-muted-foreground mb-8">
+                  Learn, practice, and excel in web development with our comprehensive courses and hands-on projects.
+                </p>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  <Button size="lg" onClick={handleStartLearning}>
+                    <Play className="w-4 h-4 mr-2" />
+                    Start Learning
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={handleExploreRoadmaps}>
+                    <ChevronRight className="w-4 h-4 mr-2" />
+                    Explore Roadmaps
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={handleDzConnect} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600">
+                    <Rocket className="w-4 h-4 mr-2" />
+                    DZCONNECT
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </section>
         
@@ -520,7 +466,7 @@ const Index = () => {
                 transition={{ duration: 0.5 }}
                 viewport={{ once: true }}
               >
-                Ready to Transform Your Future?
+                Ready to Transform Your Future? 
               </motion.h2>
               <motion.p
                 className="text-xl text-muted-foreground mb-8"
@@ -530,7 +476,7 @@ const Index = () => {
                 viewport={{ once: true }}
               >
                 Join thousands of successful developers who started their journey with us. Your future in tech starts here.
-              </motion.p>
+              </motion.p> 
               <motion.div
                 className="flex flex-col sm:flex-row gap-4 justify-center"
                 initial={{ opacity: 0 }}

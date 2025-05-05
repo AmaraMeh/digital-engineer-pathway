@@ -29,6 +29,9 @@ import FAQ from "./pages/FAQ";
 import Leaderboard from "./pages/Leaderboard";
 import BattleRoyale from "./pages/BattleRoyale";
 import Inbox from "@/pages/Inbox";
+import AdminPanel from "./pages/AdminPanel";
+import CommunityDetails from "@/pages/CommunityDetails";
+import DzConnect from "@/pages/dzconnect";
 
 // Initialize React Query client
 const queryClient = new QueryClient({
@@ -72,11 +75,14 @@ const App = () => (
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/tutorials" element={<Tutorials />} />
                 <Route path="/community" element={<Community />} />
+                <Route path="/community/:communityId" element={<CommunityDetails />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/battle-royale" element={<BattleRoyale />} />
                 <Route path="/inbox" element={<Inbox />} />
                 <Route path="/inbox/:userId" element={<Inbox />} />
+                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/dzconnect" element={<DzConnect />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Router>
