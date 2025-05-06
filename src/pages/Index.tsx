@@ -1,191 +1,83 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Book, Code, Terminal, Laptop, Server, ArrowRight, Play, Award, ChevronRight, Sparkles, Heart, Star, Rocket, Moon, Sun, Twitter, Github, Linkedin, Youtube, Users, MessageSquare, Calendar, Trophy, Share2, Bell, Settings, Plus } from "lucide-react";
-import { useTheme } from "@/context/ThemeContext";
+import { 
+  Book, GraduationCap, Building2, Users, Calendar,
+  BookOpen, FileText, Library, MapPin, HelpCircle,
+  Sun, Moon, ChevronRight, Globe, Mail, Phone
+} from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import { HeroBackgroundAnimation } from "@/components/HeroBackgroundAnimation";
+import { FloatingParticles } from "@/components/FloatingParticles";
 
-const features = [
+const popularGuides = [
   {
-    title: "Interactive Learning",
-    description: "Learn through interactive lessons, playgrounds, and coding exercises.",
-    icon: Play,
-    color: "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+    id: "registration",
+    title: "Guide d'Inscription",
+    description: "Processus complet d'inscription et réinscription",
+    level: "Important",
+    duration: "15 min de lecture"
   },
   {
-    title: "Comprehensive Roadmaps",
-    description: "Follow structured learning paths for various tech careers.",
-    icon: ChevronRight,
-    color: "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+    id: "campus",
+    title: "Découvrir le Campus",
+    description: "Tout sur les installations et services",
+    level: "Essentiel",
+    duration: "10 min de lecture"
   },
   {
-    title: "Code Playgrounds",
-    description: "Practice your skills in our interactive code environments.",
-    icon: Code,
-    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-  },
-  {
-    title: "Earn Certificates",
-    description: "Get recognized for your knowledge with course certificates.",
-    icon: Award,
-    color: "bg-green-500/10 text-green-600 dark:text-green-400"
+    id: "services",
+    title: "Services Étudiants",
+    description: "Services disponibles pour les étudiants",
+    level: "Utile",
+    duration: "8 min de lecture"
   }
 ];
 
-const tracks = [
+const studentServices = [
   {
-    title: "Frontend Development",
-    icon: Laptop,
-    description: "Master the art of creating beautiful, responsive, and interactive user interfaces",
-    progress: 45,
-    link: "/roadmaps",
-    featured: true
+    id: "library",
+    title: "Bibliothèque",
+    description: "Accès aux ressources documentaires",
+    icon: Library
   },
   {
-    title: "Backend Development",
-    icon: Server,
-    description: "Build robust server-side applications and APIs with modern technologies",
-    progress: 0,
-    link: "/roadmaps",
-    comingSoon: true
+    id: "housing",
+    title: "Hébergement",
+    description: "Résidences universitaires",
+    icon: Building2
   },
   {
-    title: "Full Stack Development",
-    icon: Code,
-    description: "Become a versatile developer by mastering both frontend and backend technologies",
-    progress: 0,
-    link: "/roadmaps",
-    comingSoon: true
-  },
-  {
-    title: "DevOps Engineering",
-    icon: Terminal,
-    description: "Learn to deploy, monitor, and maintain applications at scale",
-    progress: 0,
-    link: "/roadmaps",
-    comingSoon: true
+    id: "health",
+    title: "Santé",
+    description: "Services médicaux universitaires",
+    icon: HelpCircle
   }
 ];
-
-const popularCourses = [
-  {
-    id: "html-basics",
-    title: "HTML Fundamentals",
-    description: "Build the foundation of web development with HTML5",
-    level: "Beginner",
-    duration: "2 hours",
-    icon: Code
-  },
-  {
-    id: "css-fundamentals",
-    title: "CSS Mastery",
-    description: "Create stunning designs with modern CSS techniques",
-    level: "Beginner",
-    duration: "3 hours",
-    icon: Laptop
-  },
-  {
-    id: "js-fundamentals",
-    title: "JavaScript Essentials",
-    description: "Add interactivity and dynamic features to your websites",
-    level: "Beginner",
-    duration: "4 hours",
-    icon: Terminal
-  }
-];
-
-const HeroBackgroundAnimation = () => {
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-br from-primary/40 via-purple-500/20 to-blue-500/10 blur-3xl opacity-50 dark:opacity-30 -z-10 rounded-full transform -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-to-tr from-violet-500/30 via-pink-500/20 to-transparent blur-3xl opacity-40 dark:opacity-20 -z-10 rounded-full"></div>
-      
-      <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-blue-500 rounded-full animate-pulse"></div>
-      <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-      <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-      <div className="absolute top-2/3 right-1/3 w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
-    </div>
-  );
-};
-
-const FloatingParticles = () => {
-  const [particles, setParticles] = useState<Array<{id: number, x: number, y: number, size: number, color: string}>>([]);
-  
-  useEffect(() => {
-    const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
-    const newParticles = Array.from({length: 30}, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 5 + 2,
-      color: colors[Math.floor(Math.random() * colors.length)]
-    }));
-    setParticles(newParticles);
-  }, []);
-  
-  return (
-    <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
-      {particles.map(particle => (
-        <motion.div
-          key={particle.id}
-          className="absolute rounded-full opacity-70"
-          style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            backgroundColor: particle.color
-          }}
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: [0.3, 0.8, 0.3],
-            scale: [1, 1.2, 1],
-            x: [0, Math.random() * 50 - 25, 0],
-            y: [0, Math.random() * 50 - 25, 0]
-          }}
-          transition={{
-            repeat: Infinity,
-            duration: 10 + Math.random() * 10,
-            ease: "easeInOut"
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
 const Index = () => {
-  const [currentTab, setCurrentTab] = useState("courses");
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const { theme, setTheme, isDarkMode } = useTheme();
+  const [currentTab, setCurrentTab] = useState("guides");
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   
-  const handleStartLearning = () => {
-    window.location.href = '/courses';
-  };
-
-  const handleExploreRoadmaps = () => {
-    window.location.href = '/roadmaps';
-  };
-
-  const handleDzConnect = () => {
-    navigate('/dzconnect');
+  const handleUbejaiaGuide = () => {
+    navigate('/ubejaia-guide');
   };
 
   const toggleTheme = () => {
-    setTheme(isDarkMode ? 'light' : 'dark');
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (
     <>
       <Navbar />
       
-      <div className="relative">
+      <div className="relative min-h-screen">
         <HeroBackgroundAnimation />
         <FloatingParticles />
         
@@ -202,7 +94,7 @@ const Index = () => {
             className="rounded-full w-12 h-12 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 hover:shadow-lg transition-all"
             onClick={toggleTheme}
           >
-            {isDarkMode ? (
+            {theme === 'dark' ? (
               <Sun className="h-5 w-5 text-amber-500" />
             ) : (
               <Moon className="h-5 w-5 text-blue-500" />
@@ -211,45 +103,43 @@ const Index = () => {
         </motion.div>
         
         {/* Hero Section */}
-        <section className="relative py-20 px-4 min-h-[80vh] flex items-center">
+        <section className="relative py-32 px-4 min-h-[90vh] flex items-center">
           <div className="container mx-auto">
-            <div className="max-w-4xl mx-auto text-center">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <Badge className="mb-4 px-4 py-1.5 text-sm bg-primary/10 text-primary">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Digital Engineer Pathway
-                </Badge>
-                <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                  Master Web Development with Our Interactive Platform
-                </h1>
-                <p className="text-xl text-muted-foreground mb-8">
-                  Learn, practice, and excel in web development with our comprehensive courses and hands-on projects.
-                </p>
-                <div className="flex flex-wrap gap-4 justify-center">
-                  <Button size="lg" onClick={handleStartLearning}>
-                    <Play className="w-4 h-4 mr-2" />
-                    Start Learning
-                  </Button>
-                  <Button size="lg" variant="outline" onClick={handleExploreRoadmaps}>
-                    <ChevronRight className="w-4 h-4 mr-2" />
-                    Explore Roadmaps
-                  </Button>
-                  <Button size="lg" variant="outline" onClick={handleDzConnect} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600">
-                    <Rocket className="w-4 h-4 mr-2" />
-                    DZCONNECT
-                  </Button>
-                </div>
-              </motion.div>
-            </div>
+            <motion.div
+              className="text-center max-w-4xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Badge className="mb-6 px-6 py-2 text-base bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                <Building2 className="w-5 h-5 mr-2" />
+                Université de Béjaïa
+              </Badge>
+              <h1 className="text-5xl md:text-6xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+                Guide Complet pour les Étudiants
+              </h1>
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
+                Découvrez toutes les ressources et informations nécessaires pour réussir vos études à l'Université de Béjaïa
+              </p>
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                <Button size="lg" className="h-14 px-8 text-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90" onClick={handleUbejaiaGuide}>
+                  <Book className="w-6 h-6 mr-3" />
+                  Accéder au Guide
+                </Button>
+                <Button size="lg" variant="outline" className="h-14 px-8 text-lg border-2" onClick={() => navigate('/ubejaia-guide/guides/registration')}>
+                  <FileText className="w-6 h-6 mr-3" />
+                  Guide d'Inscription
+                </Button>
+              </div>
+              <p className="mt-8 text-sm text-muted-foreground">
+                Développé avec ❤️ par <span className="font-semibold text-primary">Amara Mehdi</span>
+              </p>
+            </motion.div>
           </div>
         </section>
         
-        {/* Learning Tracks Section */}
-        <section className="py-24 bg-gradient-to-b from-transparent via-gray-50/50 to-transparent dark:from-transparent dark:via-gray-900/30 dark:to-transparent">
+        {/* Features Section */}
+        <section className="py-24 bg-gradient-to-b from-background to-background/50">
           <div className="container mx-auto px-4">
             <motion.div
               className="text-center mb-16"
@@ -258,99 +148,96 @@ const Index = () => {
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
             >
-              <Badge className="mb-2 px-3 py-1 text-sm bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                <Star className="w-4 h-4 mr-2" />
-                Learning Paths
+              <Badge className="mb-4 px-4 py-1.5 text-sm bg-primary/10 text-primary">
+                <Book className="w-4 h-4 mr-2" />
+                Fonctionnalités
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Path to Success</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Tout ce dont vous avez besoin</h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Follow our carefully crafted learning paths designed to take you from beginner to professional
+                Des outils et ressources essentiels pour votre parcours universitaire
               </p>
             </motion.div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {tracks.map((track, idx) => (
-                <motion.div
-                  key={track.title}
-                  className="group"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ y: -5 }}
-                >
-                  <Link to={track.link} className="block">
-                    <div className={`
-                      relative p-6 rounded-xl overflow-hidden
-                      bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-gray-800/50
-                      backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50
-                      group-hover:border-primary/50 transition-all duration-300
-                      ${track.featured ? 'border-primary/50' : ''}
-                    `}>
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      
-                      <div className="relative flex justify-between items-start mb-4">
-                        <div className={`
-                          p-3 rounded-full
-                          ${track.featured ? 'bg-primary/10 text-primary' : 'bg-gray-100 dark:bg-gray-800 text-muted-foreground'}
-                        `}>
-                          <track.icon className="h-6 w-6" />
-                        </div>
-                        {track.featured && (
-                          <Badge className="bg-primary/10 text-primary hover:bg-primary/20">
-                            Featured
-                          </Badge>
-                        )}
-                        {track.comingSoon && (
-                          <Badge variant="outline" className="border-amber-500/50 text-amber-500">
-                            Coming Soon
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <div className="relative">
-                        <h3 className="font-bold text-xl mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
-                          {track.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-4">{track.description}</p>
-                        
-                        {track.progress > 0 && (
-                          <div>
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-muted-foreground">Your progress</span>
-                              <span className="text-primary">{track.progress}%</span>
-                            </div>
-                            <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full"
-                                style={{ width: `${track.progress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-800/50 flex justify-between items-center">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {track.comingSoon ? "Get notified" : track.progress > 0 ? "Continue Learning" : "Start Learning"}
-                        </span>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                      </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+              >
+                <Card className="h-full hover:shadow-xl transition-all duration-300 border-primary/20">
+                  <CardHeader>
+                    <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4">
+                      <GraduationCap className="w-7 h-7 text-primary" />
                     </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-            
-            <div className="text-center mt-12">
-              <Button variant="outline" size="lg" onClick={handleExploreRoadmaps}>
-                View All Learning Paths
-              </Button>
+                    <CardTitle className="text-2xl mb-2">Formations</CardTitle>
+                    <CardDescription className="text-base">
+                      Explorez nos programmes de formation en licence et master avec des détails complets sur chaque spécialité
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter>
+                    <Button variant="ghost" className="w-full group" onClick={() => navigate('/ubejaia-guide/years/l1')}>
+                      Découvrir
+                      <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                viewport={{ once: true }}
+              >
+                <Card className="h-full hover:shadow-xl transition-all duration-300 border-primary/20">
+                  <CardHeader>
+                    <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4">
+                      <Building2 className="w-7 h-7 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl mb-2">Campus</CardTitle>
+                    <CardDescription className="text-base">
+                      Découvrez nos installations modernes et services universitaires pour une expérience étudiante optimale
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter>
+                    <Button variant="ghost" className="w-full group" onClick={() => navigate('/ubejaia-guide/guides/campus')}>
+                      Explorer
+                      <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+              >
+                <Card className="h-full hover:shadow-xl transition-all duration-300 border-primary/20">
+                  <CardHeader>
+                    <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-4">
+                      <Users className="w-7 h-7 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl mb-2">Services</CardTitle>
+                    <CardDescription className="text-base">
+                      Accédez à tous les services disponibles pour les étudiants, de l'inscription à la vie étudiante
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter>
+                    <Button variant="ghost" className="w-full group" onClick={() => navigate('/ubejaia-guide/guides/services')}>
+                      Consulter
+                      <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </motion.div>
             </div>
           </div>
         </section>
         
-        {/* Courses/Roadmaps Section */}
+        {/* Resources Section */}
         <section className="py-24 container mx-auto px-4">
           <motion.div
             className="text-center mb-10"
@@ -361,31 +248,31 @@ const Index = () => {
           >
             <Badge className="mb-2 px-3 py-1 text-sm bg-blue-500/10 text-blue-600 dark:text-blue-400">
               <Book className="w-4 h-4 mr-2" />
-              Learning Resources
+              Ressources
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Start Your Learning Journey</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ressources Essentielles</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Explore our comprehensive collection of courses and interactive roadmaps
+              Accédez aux informations et services indispensables pour votre parcours universitaire
             </p>
           </motion.div>
           
           <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
             <div className="flex justify-center mb-6">
               <TabsList className="grid w-full max-w-md grid-cols-2">
-                <TabsTrigger value="courses" className="text-lg py-3">
-                  Popular Courses
+                <TabsTrigger value="guides" className="text-lg py-3">
+                  Guides Importants
                 </TabsTrigger>
-                <TabsTrigger value="roadmaps" className="text-lg py-3">
-                  Interactive Roadmaps
+                <TabsTrigger value="services" className="text-lg py-3">
+                  Services Étudiants
                 </TabsTrigger>
               </TabsList>
             </div>
             
-            <TabsContent value="courses" className="mt-0">
+            <TabsContent value="guides" className="mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {popularCourses.map((course, idx) => (
+                {popularGuides.map((guide, idx) => (
                   <motion.div
-                    key={course.id}
+                    key={guide.id}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: idx * 0.1 }}
@@ -393,29 +280,25 @@ const Index = () => {
                     whileHover={{ y: -5 }}
                     className="group"
                   >
-                    <Link to={`/courses/${course.id}`}>
+                    <Link to={`/ubejaia-guide/guides/${guide.id}`}>
                       <Card className="overflow-hidden h-full border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all">
                         <CardHeader>
                           <div className="flex justify-between items-center mb-2">
                             <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                              {course.level}
+                              {guide.level}
                             </Badge>
                             <div className="text-xs text-muted-foreground flex items-center">
                               <Book className="h-3 w-3 mr-1" />
-                              {course.duration}
+                              {guide.duration}
                             </div>
                           </div>
-                          <CardTitle>{course.title}</CardTitle>
-                          <CardDescription>{course.description}</CardDescription>
+                          <CardTitle>{guide.title}</CardTitle>
+                          <CardDescription>{guide.description}</CardDescription>
                         </CardHeader>
                         <CardFooter className="flex justify-between border-t pt-4">
-                          <Button variant="outline" size="sm" className="gap-1">
+                          <Button variant="ghost" size="sm" className="gap-1">
                             <Book className="h-3 w-3" />
-                            Details
-                          </Button>
-                          <Button size="sm" className="gap-1 group">
-                            <Play className="h-3 w-3 group-hover:scale-110 transition-transform" />
-                            Start Learning
+                            Consulter
                           </Button>
                         </CardFooter>
                       </Card>
@@ -423,172 +306,243 @@ const Index = () => {
                   </motion.div>
                 ))}
               </div>
-              
-              <div className="text-center mt-12">
-                <Button className="gap-1 group">
-                  Explore All Courses
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </div>
             </TabsContent>
             
-            <TabsContent value="roadmaps" className="mt-0">
+            <TabsContent value="services" className="mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {studentServices.map((service, idx) => (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="text-center p-10 rounded-xl bg-gradient-to-br from-primary/5 via-purple-500/5 to-blue-500/5 border border-gray-200/50 dark:border-gray-800/50"
-              >
-                <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="text-2xl font-bold mb-2">Interactive Learning Roadmaps</h3>
-                <p className="max-w-2xl mx-auto mb-6 text-muted-foreground">
-                  Our visual roadmaps guide you through the learning process with interactive mind maps, clear progression paths, and practical exercises.
-                </p>
-                <Button asChild className="gap-1 group bg-gradient-to-r from-primary to-purple-600">
-                  <Link to="/roadmaps">
-                    Explore Roadmaps
-                    <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                    key={service.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: idx * 0.1 }}
+                    viewport={{ once: true }}
+                    whileHover={{ y: -5 }}
+                    className="group"
+                  >
+                    <Card className="overflow-hidden h-full border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all">
+                      <CardHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <service.icon className="w-5 h-5 text-primary" />
+                          </div>
+                          <CardTitle>{service.title}</CardTitle>
+                        </div>
+                        <CardDescription>{service.description}</CardDescription>
+                      </CardHeader>
+                      <CardFooter className="flex justify-between border-t pt-4">
+                        <Button variant="ghost" size="sm" className="gap-1">
+                          <ChevronRight className="h-3 w-3" />
+                          En savoir plus
                 </Button>
+                      </CardFooter>
+                    </Card>
               </motion.div>
+                ))}
+              </div>
             </TabsContent>
           </Tabs>
         </section>
         
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-br from-primary/10 via-purple-500/5 to-transparent dark:from-primary/5 dark:via-purple-500/5 dark:to-transparent">
+        {/* Statistics Section */}
+        <section className="py-24 bg-gradient-to-br from-primary/5 via-purple-500/5 to-transparent">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <motion.h2 
-                className="text-3xl md:text-4xl font-bold mb-4"
+            <motion.div
+              className="text-center mb-16"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-              >
-                Ready to Transform Your Future? 
-              </motion.h2>
-              <motion.p
-                className="text-xl text-muted-foreground mb-8"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                viewport={{ once: true }}
-              >
-                Join thousands of successful developers who started their journey with us. Your future in tech starts here.
-              </motion.p> 
+              viewport={{ once: true }}
+            >
+              <Badge className="mb-2 px-3 py-1 text-sm bg-primary/10 text-primary">
+                <Building2 className="w-4 h-4 mr-2" />
+                Statistiques
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">L'Université en Chiffres</h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Découvrez les chiffres clés de l'Université de Béjaïa
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 justify-center"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
                 viewport={{ once: true }}
               >
-                <Button size="lg" className="bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 group">
-                  Start Your Journey
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-                <Button size="lg" variant="outline">
-                  Browse Courses
-                </Button>
+                <Card className="text-center">
+                  <CardHeader>
+                    <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-4xl font-bold text-primary">25041</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">Étudiants en Licence</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                viewport={{ once: true }}
+              >
+                <Card className="text-center">
+                  <CardHeader>
+                    <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                      <GraduationCap className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-4xl font-bold text-primary">7907</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">Étudiants en Master</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                viewport={{ once: true }}
+              >
+                <Card className="text-center">
+                  <CardHeader>
+                    <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                      <BookOpen className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-4xl font-bold text-primary">267</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">Professeurs</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+                viewport={{ once: true }}
+              >
+                <Card className="text-center">
+                  <CardHeader>
+                    <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                      <Library className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-4xl font-bold text-primary">37</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">Laboratoires de recherche</p>
+                  </CardContent>
+                </Card>
               </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Footer Section */}
-        <footer className="py-12 bg-card">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Resources</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors">
-                      Blog
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/tutorials" className="text-muted-foreground hover:text-primary transition-colors">
-                      Tutorials
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/community" className="text-muted-foreground hover:text-primary transition-colors">
-                      Community
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/faq" className="text-muted-foreground hover:text-primary transition-colors">
-                      FAQ
-                    </Link>
-                  </li>
-                </ul>
+        {/* Contact Section */}
+        <section className="py-24 container mx-auto px-4">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <Badge className="mb-2 px-3 py-1 text-sm bg-primary/10 text-primary">
+              <Mail className="w-4 h-4 mr-2" />
+              Contact
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Nous Contacter</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Besoin d'aide ? N'hésitez pas à nous contacter
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Phone className="w-5 h-5 text-primary" />
               </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Company</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                      About Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
-                      Contact Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/careers" className="text-muted-foreground hover:text-primary transition-colors">
-                      Careers
-                    </Link>
-                  </li>
-                </ul>
+                    <CardTitle>Téléphone</CardTitle>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Legal</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
-                      Privacy Policy
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
-                      Terms of Service
-                    </Link>
-                  </li>
-                </ul>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">+213 34 81 68 31</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Mail className="w-5 h-5 text-primary" />
               </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Connect</h3>
-                <div className="flex space-x-4">
-                  <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    <Twitter className="h-5 w-5" />
-                  </a>
-                  <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    <Github className="h-5 w-5" />
-                  </a>
-                  <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    <Linkedin className="h-5 w-5" />
-                  </a>
-                  <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                    <Youtube className="h-5 w-5" />
-                  </a>
+                    <CardTitle>Email</CardTitle>
                 </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">contact@univ-bejaia.dz</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Globe className="w-5 h-5 text-primary" />
               </div>
+                    <CardTitle>Site Web</CardTitle>
             </div>
-            <div className="mt-8 pt-8 border-t border-border">
-              <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-2 text-primary">
-                  <Code className="h-5 w-5" />
-                  <span className="font-semibold">Developed by Amara Mehdi</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} Digital Engineer Pathway. All rights reserved.
-                </p>
-              </div>
-            </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">www.univ-bejaia.dz</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="py-12 bg-background/50 border-t">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-muted-foreground">
+              © {new Date().getFullYear()} Université de Béjaïa Guide. Développé par{" "}
+              <a 
+                href="https://github.com/amara-mehdi" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-semibold"
+              >
+                Amara Mehdi
+              </a>
+            </p>
           </div>
         </footer>
       </div>

@@ -32,6 +32,19 @@ import Inbox from "@/pages/Inbox";
 import AdminPanel from "./pages/AdminPanel";
 import CommunityDetails from "@/pages/CommunityDetails";
 import DzConnect from "@/pages/dzconnect";
+import UbejaiaGuide from "@/pages/ubejaia-guide";
+import DepartmentPage from "@/pages/ubejaia-guide/departments/[departmentId]";
+import YearPage from "@/pages/ubejaia-guide/years/[yearId]";
+import GuidePage from "@/pages/ubejaia-guide/guides/[guideId]";
+import FacultyPage from "@/pages/ubejaia-guide/faculties/[facultyId]";
+import FacultiesPage from "@/pages/ubejaia-guide/faculties";
+import CampusPage from "@/pages/ubejaia-guide/campus";
+import HousingPage from "@/pages/ubejaia-guide/housing";
+import TransportPage from "@/pages/ubejaia-guide/transport";
+import RestaurantPage from "@/pages/ubejaia-guide/restauration";
+import LibrariesPage from "@/pages/ubejaia-guide/libraries";
+import StudentLifePage from "@/pages/ubejaia-guide/student-life";
+import CalculatorPage from "@/pages/ubejaia-guide/calculator";
 
 // Initialize React Query client
 const queryClient = new QueryClient({
@@ -83,6 +96,22 @@ const App = () => (
                 <Route path="/inbox/:userId" element={<Inbox />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/dzconnect" element={<DzConnect />} />
+                
+                {/* Ubejaia Guide Routes */}
+                <Route path="/ubejaia-guide" element={<UbejaiaGuide />} />
+                <Route path="/ubejaia-guide/faculties" element={<FacultiesPage />} />
+                <Route path="/ubejaia-guide/faculties/:facultyId" element={<FacultyPage />} />
+                <Route path="/ubejaia-guide/faculties/:facultyId/departments/:departmentId" element={<DepartmentPage />} />
+                <Route path="/ubejaia-guide/campus" element={<CampusPage />} />
+                <Route path="/ubejaia-guide/housing" element={<HousingPage />} />
+                <Route path="/ubejaia-guide/transport" element={<TransportPage />} />
+                <Route path="/ubejaia-guide/restauration" element={<RestaurantPage />} />
+                <Route path="/ubejaia-guide/libraries" element={<LibrariesPage />} />
+                <Route path="/ubejaia-guide/student-life" element={<StudentLifePage />} />
+                <Route path="/ubejaia-guide/years/:yearId" element={<YearPage />} />
+                <Route path="/ubejaia-guide/guides/:guideId" element={<GuidePage />} />
+                <Route path="/ubejaia-guide/calculator" element={<CalculatorPage />} />
+                
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Router>

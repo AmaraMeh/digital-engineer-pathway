@@ -1,6 +1,9 @@
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
+import { getAuth } from "firebase/auth";
 import { 
-  getAuth, 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -8,24 +11,30 @@ import {
   onAuthStateChanged,
   User
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBtv9tiAg4dGG2MfVj-nS-CzoNEUIR_14Y",
-  authDomain: "sample-firebase-ai-apph-48570.firebaseapp.com",
-  projectId: "sample-firebase-ai-apph-48570",
-  storageBucket: "sample-firebase-ai-apph-48570.firebasestorage.app",
-  messagingSenderId: "560740686768",
-  appId: "1:560740686768:web:2b61a3a13069cfecef5475"
+  apiKey: "AIzaSyB5XYqWKhHdiVDXJx4iOwtpxD8eUCPRfKU",
+  authDomain: "universite-de-bejaia-547fc.firebaseapp.com",
+  databaseURL: "https://universite-de-bejaia-547fc-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "universite-de-bejaia-547fc",
+  storageBucket: "universite-de-bejaia-547fc.firebasestorage.app",
+  messagingSenderId: "517622731583",
+  appId: "1:517622731583:web:25453d5e01226585bf798a",
+  measurementId: "G-SQ0WWSCS7B"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+
+// Initialize services
+const analytics = getAnalytics(app);
+const db = getDatabase(app);
+const firestore = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
 // Auth functions
 export const signUp = async (
@@ -50,7 +59,7 @@ export const signUp = async (
     await updateProfile(userCredential.user, { displayName });
     
     // Create user document in Firestore
-    await setDoc(doc(db, "users", userCredential.user.uid), {
+    await setDoc(doc(firestore, "users", userCredential.user.uid), {
       uid: userCredential.user.uid,
       email: email,
       displayName: displayName,
@@ -80,7 +89,7 @@ export const signUp = async (
     });
 
     // Create initial leaderboard entry
-    await setDoc(doc(db, "leaderboard", userCredential.user.uid), {
+    await setDoc(doc(firestore, "leaderboard", userCredential.user.uid), {
       uid: userCredential.user.uid,
       displayName: displayName,
       photoURL: userCredential.user.photoURL || "",
@@ -112,3 +121,5 @@ export const signIn = async (email: string, password: string) => {
 export const logout = async () => {
   await signOut(auth);
 };
+
+export { app, analytics, db, firestore, auth, storage };
