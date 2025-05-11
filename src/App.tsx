@@ -31,7 +31,6 @@ import BattleRoyale from "./pages/BattleRoyale";
 import Inbox from "@/pages/Inbox";
 import AdminPanel from "./pages/AdminPanel";
 import CommunityDetails from "@/pages/CommunityDetails";
-import DzConnect from "@/pages/dzconnect";
 
 // Initialize React Query client
 const queryClient = new QueryClient({
@@ -82,8 +81,7 @@ const App = () => (
                 <Route path="/inbox" element={<Inbox />} />
                 <Route path="/inbox/:userId" element={<Inbox />} />
                 <Route path="/admin" element={<AdminPanel />} />
-                <Route path="/dzconnect" element={<DzConnect />} />
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<Index />} />
               </Routes>
             </Router>
           </TooltipProvider>
