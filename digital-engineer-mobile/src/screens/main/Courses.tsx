@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,7 +15,7 @@ interface Course {
   id: string;
   title: string;
   description: string;
-  image: string;
+  image?: string;
   duration: string;
   level: string;
   progress?: number;
@@ -27,7 +26,6 @@ const courses: Course[] = [
     id: 'html-basics',
     title: 'HTML Basics',
     description: 'Learn the fundamentals of HTML and web development',
-    image: 'https://example.com/html.png',
     duration: '2 hours',
     level: 'Beginner',
     progress: 60,
@@ -36,7 +34,6 @@ const courses: Course[] = [
     id: 'css-basics',
     title: 'CSS Basics',
     description: 'Master CSS styling and layout techniques',
-    image: 'https://example.com/css.png',
     duration: '3 hours',
     level: 'Beginner',
   },
@@ -44,7 +41,6 @@ const courses: Course[] = [
     id: 'javascript-basics',
     title: 'JavaScript Basics',
     description: 'Get started with JavaScript programming',
-    image: 'https://example.com/js.png',
     duration: '4 hours',
     level: 'Intermediate',
   },
@@ -59,13 +55,8 @@ const CourseCard = ({ course, isDarkMode }: { course: Course; isDarkMode: boolea
         styles.courseCard,
         { backgroundColor: isDarkMode ? '#333333' : '#ffffff' }
       ]}
-      onPress={() => navigation.navigate('CourseDetails', { courseId: course.id } as never)}
+      onPress={() => navigation.navigate('CourseDetails', { courseId: course.id, title: course.title } as never)}
     >
-      <Image
-        source={{ uri: course.image }}
-        style={styles.courseImage}
-        defaultSource={require('../../assets/course-placeholder.png')}
-      />
       <View style={styles.courseContent}>
         <Text style={[styles.courseTitle, { color: isDarkMode ? '#ffffff' : '#000000' }]}>
           {course.title}
@@ -165,11 +156,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
-  },
-  courseImage: {
-    width: '100%',
-    height: 160,
-    resizeMode: 'cover',
   },
   courseContent: {
     padding: 16,

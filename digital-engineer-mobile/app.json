@@ -7,6 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "digitalengineermobile",
     "userInterfaceStyle": "automatic",
+    "entryPoint": "./index.js",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -16,13 +17,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.digitalengineer.mobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.digitalengineer.mobile"
     },
     "web": {
       "bundler": "metro"

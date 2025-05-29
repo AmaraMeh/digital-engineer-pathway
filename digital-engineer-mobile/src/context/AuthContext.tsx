@@ -1,29 +1,54 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
+  setPersistence,
+  browserLocalPersistence,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User,
+  User
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Your Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBtv9tiAg4dGG2MfVj-nS-CzoNEUIR_14Y",
+  authDomain: "sample-firebase-ai-apph-48570.firebaseapp.com",
+  projectId: "sample-firebase-ai-apph-48570",
+  storageBucket: "sample-firebase-ai-apph-48570.firebasestorage.app",
+  messagingSenderId: "560740686768",
+  appId: "1:560740686768:web:2b61a3a13069cfecef5475"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Set persistence to local
+setPersistence(auth, browserLocalPersistence);
+
+// Store the auth token in AsyncStorage
+const storeAuthToken = async (token: string) => {
+  try {
+    await AsyncStorage.setItem('@auth_token', token);
+  } catch (error) {
+    console.error('Error storing auth token:', error);
+  }
+};
+
+// Get the auth token from AsyncStorage
+const getAuthToken = async () => {
+  try {
+    return await AsyncStorage.getItem('@auth_token');
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};
 
 interface AuthContextType {
   user: User | null;
@@ -40,43 +65,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
+    // Check for stored token on mount
+    getAuthToken().then((token) => {
+      if (token) {
+        // If we have a token, we can initialize auth state
+        onAuthStateChanged(auth, (user) => {
+          setUser(user);
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
     });
 
-    return unsubscribe;
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        // Store the new token when user signs in
+        currentUser.getIdToken().then((token) => {
+          storeAuthToken(token);
+        });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      setLoading(true);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
+      await storeAuthToken(token);
     } catch (error) {
-      throw new Error('Failed to sign in. Please check your credentials.');
+      console.error('Error signing in:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
+      setLoading(true);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      const token = await userCredential.user.getIdToken();
+      await storeAuthToken(token);
       
       // Create user document in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
         name,
         email,
         createdAt: new Date(),
       });
     } catch (error) {
-      throw new Error('Failed to create account. Please try again.');
+      console.error('Error signing up:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     try {
+      setLoading(true);
       await signOut(auth);
+      await AsyncStorage.removeItem('@auth_token');
     } catch (error) {
-      throw new Error('Failed to sign out. Please try again.');
+      console.error('Error signing out:', error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 

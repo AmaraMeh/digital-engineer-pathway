@@ -71,13 +71,34 @@ export default function App() {
           <NavigationContainer>
             <StatusBar style="auto" />
             <Stack.Navigator
+              initialRouteName="Login"
               screenOptions={{
                 headerShown: false,
               }}
             >
-              <Stack.Screen name="Login" component={Login} />
-              <Stack.Screen name="Signup" component={Signup} />
-              <Stack.Screen name="MainTabs" component={MainTabs} />
+              <Stack.Screen 
+                name="Login" 
+                component={Login}
+                options={{
+                  headerShown: true,
+                  title: 'Login'
+                }}
+              />
+              <Stack.Screen 
+                name="Signup" 
+                component={Signup}
+                options={{
+                  headerShown: true,
+                  title: 'Sign Up'
+                }}
+              />
+              <Stack.Screen 
+                name="MainTabs" 
+                component={MainTabs}
+                options={{
+                  headerShown: false
+                }}
+              />
               <Stack.Screen 
                 name="CourseDetails" 
                 component={CourseDetails}
