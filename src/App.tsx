@@ -30,7 +30,12 @@ import FAQ from "./pages/FAQ";
 import Leaderboard from "./pages/Leaderboard";
 import BattleRoyale from "./pages/BattleRoyale";
 import Inbox from "@/pages/Inbox";
+<<<<<<< HEAD
 import AdminPanel from './pages/AdminPanel';
+=======
+import AdminPanel from "./pages/AdminPanel";
+import CommunityDetails from "@/pages/CommunityDetails";
+>>>>>>> ce75beafacb03958a21b96746a8c74423069b768
 
 // Initialize React Query client
 const queryClient = new QueryClient({
@@ -50,6 +55,7 @@ const App = () => (
     <AuthProvider>
       <ThemeProvider>
         <LanguageProvider>
+<<<<<<< HEAD
           <ProgressProvider>
             <TooltipProvider>
               <Toaster />
@@ -86,6 +92,43 @@ const App = () => (
               </Router>
             </TooltipProvider>
           </ProgressProvider>
+=======
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Router basename={baseUrl}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/:userId" element={<Profile />} />
+                <Route path="/roadmaps" element={<Roadmaps />} />
+                <Route path="/courses" element={<Courses />} />
+                <Route path="/courses/:courseId" element={<CourseContent />} />
+                <Route path="/courses/html-basics/learn" element={<HtmlBasicsCourse />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/tutorials" element={<Tutorials />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/community/:communityId" element={<CommunityDetails />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/battle-royale" element={<BattleRoyale />} />
+                <Route path="/inbox" element={<Inbox />} />
+                <Route path="/inbox/:userId" element={<Inbox />} />
+                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="*" element={<Index />} />
+              </Routes>
+            </Router>
+          </TooltipProvider>
+>>>>>>> ce75beafacb03958a21b96746a8c74423069b768
         </LanguageProvider>
       </ThemeProvider>
     </AuthProvider>
